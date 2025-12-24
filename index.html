@@ -1,0 +1,3042 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Wiskunde Quest v1.6.2</title>
+<meta name="x-game-id" content="Wiskunde Quest (Outline)">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg0:#f8fafc;
+    --ink:#0b1220;
+    --mut:#6b7280;
+    --line:#e5e7eb;
+    --card:#ffffff;
+    --accent:#2563eb;
+    --good:#16a34a;
+    --bad:#dc2626;
+    --warn:#d97706;
+
+    --r:18px;
+    --r2:24px;
+    --shadow: 0 14px 40px rgba(2,6,23,.10);
+
+    --pad: clamp(14px, 2.2vw, 22px);
+    --hbtn: 46px;
+    --hinput: 52px;
+    --maxw: 1180px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: Inter, system-ui, Arial, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 680px at 85% -10%, #eaf1ff 0%, var(--bg0) 60%, #fbfdff 100%);
+    overflow:hidden;
+  }
+
+  .app{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:stretch;
+    padding: var(--pad);
+  }
+
+  .shell{
+    width:min(var(--maxw), 100%);
+    height:100%;
+    display:grid;
+    grid-template-rows: auto 1fr;
+    gap: 12px;
+  }
+
+  /* Top bar */
+  .top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.75);
+    border:1px solid var(--line);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:900;
+    letter-spacing:.2px;
+    user-select:none;
+    min-width: 0;
+  }
+  .dot{
+    width:12px; height:12px; border-radius:999px; background: var(--accent);
+    box-shadow: 0 0 0 6px rgba(37,99,235,.12);
+    flex:0 0 auto;
+  }
+  .brandTitle{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .pill{
+    height:36px;
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 0 12px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.85);
+    font-weight:900;
+    color:#111827;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .pill.muted{color:var(--mut); font-weight:800}
+  .iconBtn{
+    height:36px; width:44px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.85);
+    cursor:pointer;
+    font-weight:900;
+  }
+  .iconBtn:active{transform:translateY(1px)}
+  .hidden{display:none !important}
+
+  .stage{
+    min-height:0;
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+
+  .screen{height:100%; min-height:0; display:none}
+  .screen.active{display:block}
+
+  .center{
+    height:100%;
+    display:grid;
+    place-items:center;
+    padding: var(--pad);
+  }
+  .card{
+    width:min(740px, 100%);
+    background: var(--card);
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    box-shadow: 0 10px 28px rgba(2,6,23,.08);
+    padding: clamp(16px, 2.4vw, 28px);
+  }
+  h1,h2,h3{margin:0 0 10px}
+  h1{font-size: clamp(20px, 3vw, 30px)}
+  h2{font-size: clamp(18px, 2.2vw, 24px)}
+  p{margin:0 0 14px; color:var(--mut); font-weight:800; line-height:1.35}
+
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .grow{flex:1}
+  .input{
+    height: var(--hinput);
+    width:100%;
+    border-radius: 14px;
+    border:1px solid var(--line);
+    padding: 0 14px;
+    font: 900 16px Inter, system-ui, Arial;
+    outline:none;
+    background:#fff;
+  }
+  .btn{
+    height: var(--hbtn);
+    border-radius: 14px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    padding: 0 14px;
+    font-weight:900;
+    font-size: 15px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    user-select:none;
+  }
+  .btn.primary{
+    background: var(--accent);
+    border-color: rgba(37,99,235,.35);
+    color:#fff;
+  }
+  .btn:disabled{
+    opacity:.45; cursor:not-allowed;
+  }
+
+  /* Topic map */
+  .map{
+    height:100%;
+    padding: var(--pad);
+    display:grid;
+    grid-template-rows: auto 1fr;
+    gap: 14px;
+  }
+  .mapHeader{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+    padding: 6px 2px 2px;
+  }
+  .mapTitle{
+    font-weight:900;
+    font-size: clamp(18px, 2.2vw, 24px);
+  }
+  .mapGrid{
+    min-height:0;
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  @media (max-width:1100px){ .mapGrid{grid-template-columns: repeat(4, 1fr);} }
+  @media (max-width:860px){ .mapGrid{grid-template-columns: repeat(3, 1fr);} }
+  @media (max-width:620px){ .mapGrid{grid-template-columns: repeat(2, 1fr);} }
+
+  .tile{
+    border:1px solid var(--line);
+    border-radius: 22px;
+    background:#fff;
+    box-shadow: 0 10px 24px rgba(2,6,23,.06);
+    overflow:hidden;
+    cursor:pointer;
+    position:relative;
+    min-height: 170px;
+    display:grid;
+    grid-template-rows: 1fr auto;
+  }
+  .tile:active{transform:translateY(1px)}
+  .tileTop{
+    display:grid;
+    place-items:center;
+    padding: 10px 10px 0;
+  }
+  .tileTop svg{width:100%; height: 120px; max-height: 140px}
+  .tileTitle{
+    padding: 10px 12px 12px;
+    font-weight: 900;
+    text-align:center;
+    letter-spacing:.2px;
+  }
+  .badgeRow{
+    position:absolute;
+    top:10px; left:10px;
+    display:flex; gap:8px;
+    pointer-events:none;
+  }
+  .medal, .cup{
+    height:28px;
+    padding:0 10px;
+    border-radius: 999px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.9);
+    font-weight: 900;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .medal{ }
+  .cup{ }
+  .tiny{color:var(--mut); font-weight:800; font-size: 14px; line-height:1.35}
+
+  /* Topic modal */
+  .modalBack{
+    position:fixed; inset:0;
+    background: rgba(2,6,23,.55);
+    display:none;
+    place-items:center;
+    z-index:60;
+    padding: var(--pad);
+  }
+  .modalBack.open{display:grid}
+  .modal{
+    width:min(720px, 100%);
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .modalHead{
+    padding: 14px 16px;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .modalBody{
+    padding: 16px;
+    display:grid;
+    gap: 12px;
+  }
+  .modeGrid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width:700px){ .modeGrid{grid-template-columns:1fr} }
+  .modeCard{
+    border:1px solid var(--line);
+    border-radius: 18px;
+    background:#fff;
+    padding: 14px;
+    display:grid;
+    gap: 10px;
+  }
+  .modeCard h3{margin:0; font-size:16px}
+  .modeCard .tiny{margin:0}
+  .xBtn{
+    height:36px; width:44px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:900;
+  }
+
+  /* Game screen */
+  .game{
+    height:100%;
+    min-height:0;
+    padding: var(--pad);
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap: 14px;
+  }
+  .game.oneCol{grid-template-columns:1fr}
+  @media (max-width:980px){
+    .game{grid-template-columns:1fr; grid-template-rows:auto auto}
+  }
+
+  .panel{
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    background:#fff;
+    box-shadow: 0 10px 24px rgba(2,6,23,.06);
+    min-height:0;
+    overflow:hidden;
+    display:grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .panelHead{
+    padding: 12px 14px;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background: #ffffff;
+  }
+  .headLeft{
+    display:flex; flex-direction:column; gap:4px; min-width:0;
+  }
+  .crumb{
+    color:var(--mut);
+    font-weight:900;
+    font-size: 12px;
+    letter-spacing:.16px;
+    text-transform: uppercase;
+    white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .headTitle{
+    font-weight: 900;
+    font-size: 16px;
+    white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .headRight{
+    display:flex; align-items:center; gap:8px;
+  }
+  .miniPill{
+    height:32px;
+    padding: 0 10px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-weight:900;
+    color:#111827;
+    white-space:nowrap;
+  }
+  .miniBtn{
+    height:32px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:900;
+    padding:0 12px;
+  }
+
+  .panelBody{
+    min-height:0;
+    padding: 16px 16px;
+    display:grid;
+    align-content:center;
+    justify-items:center;
+    gap: 14px;
+  }
+  .promptBig{
+    width:100%;
+    text-align:center;
+    font-weight:900;
+    font-size: clamp(18px, 2.4vw, 26px);
+    line-height:1.25;
+    white-space:pre-line;
+  }
+  .promptSub{
+    width:100%;
+    text-align:center;
+    color: var(--mut);
+    font-weight:800;
+    line-height:1.35;
+  }
+
+  .visualWrap{
+    width:100%;
+    display:grid;
+    place-items:center;
+    border:1px solid var(--line);
+    border-radius: 18px;
+    background: #f7fafc;
+    overflow:hidden;
+    padding: 8px;
+  }
+  .visualWrap svg{width:100%; height:auto; max-height: 300px; display:block}
+
+  .answer{
+    border-top:1px solid var(--line);
+    padding: 12px 14px;
+    display:grid;
+    gap: 10px;
+  }
+
+  .choices{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+  }
+  .choice{
+    flex: 1 1 170px;
+    height: 46px;
+    border-radius: 14px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0 10px;
+    user-select:none;
+    text-align:center;
+    min-width: 160px;
+  }
+  .choice.sel{
+    border-color: rgba(37,99,235,.55);
+    box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+  }
+
+  .aRow{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .okInline{
+    height: var(--hinput);
+    border-radius: 14px;
+    padding: 0 14px;
+  }
+  .unitChip{
+    height: var(--hinput);
+    border-radius: 14px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0 14px;
+    font-weight:900;
+    min-width: 76px;
+  }
+
+  .status{
+    text-align:center;
+    font-weight:900;
+    min-height: 22px;
+  }
+  .ok{color:var(--good)}
+  .err{color:var(--bad)}
+  .warn{color:var(--warn)}
+
+  /* Right panel keypad */
+  .rightPanel{
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    background:#fff;
+    box-shadow: 0 10px 24px rgba(2,6,23,.06);
+    overflow:hidden;
+    display:grid;
+    grid-template-rows: auto 1fr;
+  }
+  .rpHead{
+    padding: 12px 14px;
+    border-bottom:1px solid var(--line);
+    font-weight:900;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .keypad{
+    padding: 14px;
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:10px;
+    align-content:start;
+  }
+  .key{
+    height: 54px;
+    border-radius: 16px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:900;
+    font-size: 18px;
+    user-select:none;
+  }
+  .key.wide{grid-column: 1 / -1}
+  .key.ok{
+    background: rgba(22,163,74,.10);
+    border-color: rgba(22,163,74,.30);
+  }
+
+  /* Drawer */
+  .drawerBackdrop{
+    position:fixed; inset:0;
+    background: rgba(2,6,23,.55);
+    display:none;
+    align-items:stretch;
+    justify-content:flex-end;
+    z-index:70;
+  }
+  .drawerBackdrop.open{display:flex}
+  .drawer{
+    width:min(380px, 88vw);
+    background:#fff;
+    border-left:1px solid var(--line);
+    padding: 14px;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    gap: 10px;
+  }
+  .drawer h3{margin:0; font-size:18px}
+  .drawer .item{
+    height:44px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 0 12px;
+    margin-bottom: 10px;
+  }
+
+  /* Leaderboard */
+  .board{
+    height:100%;
+    padding: var(--pad);
+    display:grid;
+    grid-template-rows:auto 1fr;
+    gap: 12px;
+  }
+  .boardTop{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    justify-content:space-between;
+  }
+  table{width:100%; border-collapse:separate; border-spacing:0}
+  th,td{padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; font-weight:900}
+  th{color:var(--mut); font-weight:900; position:sticky; top:0; background:#fff}
+  .tableWrap{
+    overflow:auto;
+    border:1px solid var(--line);
+    border-radius: 16px;
+    background:#fff;
+    max-height: calc(100vh - 240px);
+  }
+
+  /* Test setup */
+  .seg{
+    display:flex; gap:8px; flex-wrap:wrap;
+    border:1px solid var(--line);
+    border-radius: 16px;
+    padding: 10px;
+    background:#fff;
+  }
+  .segBtn{
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:900;
+    padding: 0 12px;
+  }
+  [hidden]{display:none!important;}
+
+  .segBtn.on{
+    border-color: rgba(37,99,235,.55);
+    box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+  }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<div class="app">
+  <div class="shell">
+
+    <div class="top">
+      <div class="brand">
+        <span class="dot"></span>
+        <span class="brandTitle">Wiskunde Quest</span>
+        <span class="pill muted" id="pillUser">Geen naam</span>
+      </div>
+      <div class="row" style="gap:8px; flex-wrap:nowrap">
+        <span class="pill" id="pillMode" style="display:none"></span>
+        <button class="iconBtn" id="btnMenu" title="Menu">☰</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <!-- START -->
+      <section class="screen" id="scrStart">
+      <div class="card" style="text-align:left">
+        <div class="h1">Wiskunde Quest</div>
+        <div class="sub">Log in om je voortgang, medailles en het live scoreboard te bewaren (ook op een andere PC).</div>
+
+        <div class="seg" style="margin-top:12px">
+          <button class="segBtn on" id="tabLogin">Inloggen</button>
+          <button class="segBtn" id="tabSignup">Account maken</button>
+        </div>
+
+        <div id="paneLogin" style="margin-top:12px">
+          <div class="stack">
+            <label class="mini">Gebruikersnaam</label>
+            <input id="loginUser" class="input" placeholder="bv. adam" autocomplete="username"/>
+            <label class="mini">Wachtwoord</label>
+            <input id="loginPass" class="input" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" id="btnLogin">Inloggen</button>
+          </div>
+        </div>
+
+        <div id="paneSignup" hidden style="margin-top:12px">
+          <div class="stack">
+            <label class="mini">Gebruikersnaam</label>
+            <input id="signupUser" class="input" placeholder="bv. adam" autocomplete="username"/>
+            <label class="mini">Wachtwoord</label>
+            <input id="signupPass" class="input" type="password" placeholder="min. 6 tekens" autocomplete="new-password"/>
+            <label class="mini">Naam die op het scoreboard komt</label>
+            <input id="signupName" class="input" placeholder="Adam" autocomplete="name"/>
+            <label class="mini">Klas</label>
+            <input id="signupClass" class="input" placeholder="1B" autocomplete="organization"/>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" id="btnSignup">Account maken</button>
+          </div>
+          <div class="mini" style="margin-top:8px; color:var(--mut)">
+            Tip: gebruik je echte voornaam + je klas als scoreboard-naam (bv. “Adam” + “1B”).
+          </div>
+        </div>
+
+        <div id="authMsg" class="mini" style="margin-top:10px; color:var(--mut)"></div>
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="btnStartLeader">🏆 Scoreboard</button>
+          <button class="btn ghost" id="btnStartSettings">⚙ Settings</button>
+        </div>
+
+        <div class="mini" style="margin-top:10px; color:var(--mut)">
+          Als je al ingelogd bent, stuurt het spel je vanzelf door naar de kaart.
+        </div>
+      </div>
+    </section>
+
+      <!-- MAP -->
+      <section class="screen" id="scrMap">
+        <div class="map">
+          <div class="mapHeader">
+            <div>
+              <div class="mapTitle">Kies een topic</div>
+              <div class="tiny" id="mapSub">Oefenen, Run (5 min) of Toets.</div>
+            </div>
+            <div class="row">
+              <button class="btn" id="btnOpenBoard">🏆 Ranglijsten</button>
+            </div>
+          </div>
+          <div class="mapGrid" id="mapGrid"></div>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section class="screen" id="scrGame">
+        <div class="game" id="gameGrid">
+          <div class="panel">
+            <div class="panelHead">
+              <div class="headLeft">
+                <div class="crumb" id="crumbTop">Topic</div>
+                <div class="headTitle" id="headTitle">Oefenen</div>
+              </div>
+              <div class="headRight">
+                <span class="miniPill" id="pillTimer" style="display:none">⏱ 05:00</span>
+                <button class="miniBtn" id="btnStop">Stop</button>
+              </div>
+            </div>
+
+            <div class="panelBody">
+              <div class="promptBig" id="qPrompt">Vraag</div>
+              <div class="promptSub" id="qSub" style="display:none"></div>
+              <div class="visualWrap" id="visualWrap" style="display:none"></div>
+              <div class="status" id="status"></div>
+            </div>
+
+            <div class="answer">
+              <div class="choices" id="choices"></div>
+
+              <div class="aRow" id="inputRow" style="display:none">
+                <input class="input" id="mainInput" placeholder="antwoord" inputmode="decimal" autocomplete="off" spellcheck="false" style="max-width:320px">
+                <span class="unitChip" id="unitChip" style="display:none"></span>
+                <button class="btn primary okInline" id="btnOkInline">OK</button>
+              </div>
+
+              <div class="row" id="mcRow" style="justify-content:center; display:none">
+                <button class="btn primary" id="btnOkMc">OK</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="rightPanel" id="rightPanel" style="display:none">
+            <div class="rpHead">
+              <span>Keypad</span>
+              <span class="tiny" id="rpHint"></span>
+            </div>
+            <div class="keypad" id="keypad">
+              <button class="key">7</button><button class="key">8</button><button class="key">9</button><button class="key" data-k="back">⌫</button>
+              <button class="key">4</button><button class="key">5</button><button class="key">6</button><button class="key" data-k="clear">C</button>
+              <button class="key">1</button><button class="key">2</button><button class="key">3</button><button class="key" data-k="comma">,</button>
+              <button class="key">0</button><button class="key" data-k="slash">/</button><button class="key" data-k="colon">:</button><button class="key" data-k="minus">−</button>
+              <button class="key ok wide" data-k="ok">✅ OK</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="screen" id="scrSettings">
+        <div class="center">
+          <div class="card">
+            <h2>Settings</h2>
+            <div class="sub" id="settingsUser">Niet ingelogd</div>
+
+            <div class="stack" style="margin-top:10px">
+              <button class="btn" id="togAutoOk" title="Automatisch antwoorden indienen in Test-modus">Auto submit: <span id="autoOkState">off</span></button>
+              <button class="btn" id="togSound">Sound: <span id="soundState">off</span></button>
+              <button class="btn ghost" id="btnLogout">Uitloggen</button>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <button class="btn" id="btnCloseSettings">Sluiten</button>
+            </div>
+
+            <div class="mini" style="margin-top:10px;color:var(--mut)">
+              Scoreboard: automatisch verbonden met jouw Supabase-project (geen URL/Key invullen voor leerlingen).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADERBOARDS -->
+      <section class="screen" id="scrBoard">
+        <div class="board">
+          <div class="boardTop">
+            <div>
+              <div class="mapTitle">Ranglijsten (vandaag)</div>
+              <div class="tiny" id="boardNote">Overall en per topic.</div>
+            </div>
+            <div class="row">
+              <button class="btn" id="btnRefreshBoard">🔄 Refresh</button>
+              <button class="btn" id="btnBackFromBoard">Terug</button>
+            </div>
+          </div>
+
+          <div class="card" style="width:100%; padding: 14px; border-radius: 18px;">
+            <div class="row" style="justify-content:space-between; align-items:flex-end">
+              <div>
+                <div style="font-weight:900">Overall (Quest Run)</div>
+                <div class="tiny">Top 20 van vandaag</div>
+              </div>
+            </div>
+            <div class="tableWrap" style="margin-top:10px">
+              <table>
+                <thead><tr><th>#</th><th>Naam</th><th>Klas</th><th>Score</th><th>%</th></tr></thead>
+                <tbody id="boardOverall"></tbody>
+              </table>
+            </div>
+
+            <div class="row" style="margin-top:14px; justify-content:space-between; align-items:flex-end">
+              <div>
+                <div style="font-weight:900">Per topic</div>
+                <div class="tiny">Kies een topic</div>
+              </div>
+              <select class="input" id="boardTopicSel" style="height:44px; max-width:260px; font-weight:900"></select>
+            </div>
+
+            <div class="tableWrap" style="margin-top:10px">
+              <table>
+                <thead><tr><th>#</th><th>Naam</th><th>Klas</th><th>Topic</th><th>Score</th><th>%</th></tr></thead>
+                <tbody id="boardTopic"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEST SETUP -->
+      <section class="screen" id="scrTestSetup">
+        <div class="center">
+          <div class="card">
+            <h2>Toetsmodus</h2>
+            <p>Niet gekoppeld aan ranglijsten of medailles.</p>
+
+            <div class="tiny" style="margin-bottom:6px">Aantal vragen</div>
+            <div class="seg" id="testCountSeg">
+              <button class="segBtn on" data-n="20">20</button>
+              <button class="segBtn" data-n="25">25</button>
+              <button class="segBtn" data-n="30">30</button>
+            </div>
+
+            <div class="tiny" style="margin:14px 0 6px">Tijdslimiet (optioneel)</div>
+            <div class="seg" id="testTimeSeg">
+              <button class="segBtn on" data-t="0">Geen</button>
+              <button class="segBtn" data-t="600">10 min</button>
+              <button class="segBtn" data-t="900">15 min</button>
+            </div>
+
+            <div class="row" style="margin-top:14px">
+              <button class="btn primary grow" id="btnStartTest">Start Toets</button>
+              <button class="btn" id="btnBackFromTestSetup">Terug</button>
+            </div>
+
+            <p class="tiny" style="margin-top:12px">Tip: voor toetsen kan je desnoods “Auto-OK” uit laten, zodat leerlingen bewust indienen.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEST RESULT -->
+      <section class="screen" id="scrResult">
+        <div class="center">
+          <div class="card">
+            <h2 id="resTitle">Resultaat</h2>
+            <p id="resLine">Score</p>
+            <div class="row" style="margin-top:10px">
+              <button class="btn" id="btnResBack">Terug naar map</button>
+              <button class="btn primary" id="btnResAgain">Nog eens</button>
+            </div>
+            <div style="margin-top:14px">
+              <div class="tiny" style="margin-bottom:8px">Fouttypes (compact)</div>
+              <div class="tiny" id="resWrong"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Topic modal -->
+  <div class="modalBack" id="topicModalBack">
+    <div class="modal">
+      <div class="modalHead">
+        <div style="display:flex; align-items:center; gap:10px; min-width:0">
+          <div style="width:12px; height:12px; border-radius:999px; background: var(--accent); flex:0 0 auto"></div>
+          <div style="min-width:0">
+            <div class="crumb">Topic</div>
+            <div style="font-weight:900; font-size:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" id="topicModalTitle">Topic</div>
+          </div>
+        </div>
+        <button class="xBtn" id="btnCloseTopic">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="modeGrid">
+          <div class="modeCard">
+            <h3>🎯 Oefenen</h3>
+            <p class="tiny">Rustig oefenen. Geen ranglijst.</p>
+            <button class="btn primary" id="btnTopicPractice">Start</button>
+          </div>
+          <div class="modeCard">
+            <h3>🏁 Run (5 min)</h3>
+            <p class="tiny">Voor ranglijst + medaille.</p>
+            <button class="btn primary" id="btnTopicRun">Start</button>
+          </div>
+          <div class="modeCard">
+            <h3>🧪 Toets</h3>
+            <p class="tiny">Niet gekoppeld aan ranglijst.</p>
+            <button class="btn primary" id="btnTopicTest">Start</button>
+          </div>
+        </div>
+        <div class="tiny" id="topicModalBadges"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawerBackdrop" id="drawer">
+    <div class="drawer">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h3>Menu</h3>
+        <button class="iconBtn" id="btnCloseDrawer">✕</button>
+      </div>
+
+      <div>
+        <div class="item" data-nav="map">🗺️ Map <span>›</span></div>
+        <div class="item" data-nav="board">🏆 Ranglijsten <span>›</span></div>
+        <div class="item" data-nav="settings">⚙️ Settings <span>›</span></div>
+        <div class="item" data-nav="start">✏️ Naam/Klas <span>›</span></div>
+      </div>
+
+      <div class="tiny">
+        Tip: Toetsmodus is zonder ranglijst. Run is met ranglijst.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================
+   Wiskunde Quest
+   - Central submitAnswer() with lock
+   - Quiet UI: explanation only on wrong
+   - Adaptive picker (60% weakest skill, 40% mix) per topic
+   - Supabase (REST) leaderboards: today overall + per topic
+   - Basic rate limit per device
+========================= */
+
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>[...document.querySelectorAll(s)];
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const norm = (s)=>String(s??"").trim().toLowerCase().replace(/\s+/g," ").replace("ℓ","l");
+
+/* ---------- Utils ---------- */
+function parseNumNL(s){
+  s = String(s??"").trim();
+  if(!s) return NaN;
+  s = s.replace(/\s+/g,"").replace(",",".");
+  if(!/^[-+]?\d+(\.\d+)?$/.test(s)) return NaN;
+  return Number(s);
+}
+function formatNL(n){
+  // keep integers clean
+  if(Number.isInteger(n)) return String(n);
+  return String(n).replace(".",",");
+}
+function shuffle(a){
+  a=a.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function todayKey(){
+  const d=new Date();
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function msToClock(ms){
+  const s=Math.max(0, Math.floor(ms/1000));
+  const mm=Math.floor(s/60), ss=String(s%60).padStart(2,"0");
+  return `${String(mm).padStart(2,"0")}:${ss}`;
+}
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){[a,b]=[b,a%b]} return a||1; }
+
+/* ---------- Auth + Profile (Supabase) ---------- */
+const SUPABASE_URL = "https://jreitzsnmjrtkeoiuyyd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyZWl0enNubWpydGtlb2l1eXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1OTI5NTEsImV4cCI6MjA4MjE2ODk1MX0.JKvsSmazmOeHxLeMk5dOtOGZKHaPGr66Ki1ZvLLUhHI";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+});
+
+let authUser = null;
+
+const PROFILE_KEY="wq_profile_settings";
+let profile = {
+  username:"",
+  name:"",
+  class:"",
+  settings:{autoOk:false, sound:false}
+};
+
+try{
+  const raw=localStorage.getItem(PROFILE_KEY);
+  if(raw){
+    const p=JSON.parse(raw);
+    if(p?.settings) profile.settings = {...profile.settings, ...p.settings};
+    if(p?.lastUser) profile.username = p.lastUser;
+  }
+}catch(e){}
+
+function saveProfile(){
+  try{
+    localStorage.setItem(PROFILE_KEY, JSON.stringify({settings:profile.settings, lastUser:profile.username||""}));
+  }catch(e){}
+}
+
+function hasIdentity(){
+  return !!authUser && (profile.name||"").trim() && (profile.class||"").trim();
+}
+
+function updateUserPill(){
+  $("#pillUser").textContent = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
+}
+updateUserPill();
+
+
+function renderSettings(){
+  const u = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
+  const elU = document.getElementById("settingsUser");
+  if(elU) elU.textContent = u;
+  const elA = document.getElementById("autoOkState");
+  if(elA) elA.textContent = profile.settings.autoOk ? "on" : "off";
+  const elS = document.getElementById("soundState");
+  if(elS) elS.textContent = profile.settings.sound ? "on" : "off";
+}
+
+function cleanUsername(u){
+  return (u||"").trim().toLowerCase().replace(/\s+/g,".").replace(/[^a-z0-9._-]/g,"");
+}
+function usernameToEmail(username){
+  const u = cleanUsername(username);
+  return { username:u, email: u ? `${u}@wiskundequest.example` : "" };
+}
+
+/* ---------- Topics & visuals (simple, truthful icons) ---------- */
+const TOPICS=[
+  {id:"inhoud", title:"Inhoud", icon: iconBottle()},
+  {id:"grafieken", title:"Grafieken", icon: iconChart()},
+  {id:"gemmid", title:"Gemiddelde & mediaan", icon: iconDots()},
+  {id:"massa", title:"Massa", icon: iconWeight()},
+  {id:"breuken", title:"Breuken", icon: iconPie()},
+  {id:"procent", title:"Procent", icon: iconPercent()},
+  {id:"lijnen", title:"Lijnen", icon: iconLines()},
+  {id:"hoeken", title:"Hoeken", icon: iconAngle()},
+  {id:"tijd", title:"Tijd", icon: iconClock()},
+  {id:"global", title:"Quest Run", icon: iconGlobe()}
+];
+
+function iconFrame(svgInner){
+  return `<svg viewBox="0 0 320 160" role="img" aria-hidden="true">
+    <rect x="8" y="8" width="304" height="144" rx="18" fill="#f7fafc" stroke="#e5e7eb"/>
+    ${svgInner}
+  </svg>`;
+}
+function iconBottle(){
+  return iconFrame(`
+    <g transform="translate(0,0)">
+      <rect x="140" y="30" width="40" height="15" rx="6" fill="#e5e7eb" stroke="#cbd5e1"/>
+      <rect x="130" y="42" width="60" height="88" rx="20" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <path d="M140 105 Q160 118 180 105 L180 125 Q160 140 140 125 Z" fill="rgba(37,99,235,.18)"/>
+      <line x1="130" y1="74" x2="190" y2="74" stroke="#e5e7eb"/>
+      <line x1="130" y1="94" x2="190" y2="94" stroke="#e5e7eb"/>
+      <text x="160" y="156" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">ml • cl • l</text>
+    </g>
+  `);
+}
+function iconChart(){
+  return iconFrame(`
+    <g transform="translate(40,26)">
+      <rect x="0" y="0" width="240" height="108" rx="14" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <g opacity=".65">
+        <line x1="20" y1="18" x2="220" y2="18" stroke="#e5e7eb"/>
+        <line x1="20" y1="42" x2="220" y2="42" stroke="#e5e7eb"/>
+        <line x1="20" y1="66" x2="220" y2="66" stroke="#e5e7eb"/>
+        <line x1="20" y1="90" x2="220" y2="90" stroke="#e5e7eb"/>
+      </g>
+      <rect x="44" y="56" width="24" height="44" rx="6" fill="rgba(37,99,235,.25)" stroke="#cbd5e1"/>
+      <rect x="92" y="32" width="24" height="68" rx="6" fill="rgba(37,99,235,.40)" stroke="#cbd5e1"/>
+      <rect x="140" y="72" width="24" height="28" rx="6" fill="rgba(37,99,235,.18)" stroke="#cbd5e1"/>
+      <rect x="188" y="40" width="24" height="60" rx="6" fill="rgba(37,99,235,.32)" stroke="#cbd5e1"/>
+    </g>
+  `);
+}
+function iconDots(){
+  return iconFrame(`
+    <g transform="translate(38,26)">
+      <rect x="0" y="0" width="244" height="108" rx="14" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <g>
+        <circle cx="48" cy="78" r="10" fill="rgba(37,99,235,.25)" stroke="#cbd5e1"/>
+        <circle cx="84" cy="54" r="10" fill="rgba(37,99,235,.35)" stroke="#cbd5e1"/>
+        <circle cx="122" cy="64" r="10" fill="rgba(37,99,235,.18)" stroke="#cbd5e1"/>
+        <circle cx="160" cy="42" r="10" fill="rgba(37,99,235,.45)" stroke="#cbd5e1"/>
+        <circle cx="200" cy="70" r="10" fill="rgba(37,99,235,.25)" stroke="#cbd5e1"/>
+      </g>
+      <line x1="24" y1="88" x2="220" y2="88" stroke="#e5e7eb"/>
+      <text x="122" y="156" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">mediaan • gemiddelde</text>
+    </g>
+  `);
+}
+function iconWeight(){
+  return iconFrame(`
+    <g transform="translate(76,22)">
+      <path d="M80 16 a18 18 0 1 1 36 0" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <rect x="52" y="32" width="112" height="96" rx="18" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <rect x="72" y="56" width="72" height="42" rx="14" fill="#f7fafc" stroke="#e5e7eb"/>
+      <text x="108" y="84" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#2563eb">kg</text>
+    </g>
+  `);
+}
+function iconPie(){
+  return iconFrame(`
+    <g transform="translate(96,28)">
+      <circle cx="64" cy="56" r="46" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <path d="M64 56 L64 10 A46 46 0 0 1 106 79 Z" fill="rgba(37,99,235,.35)" stroke="#cbd5e1"/>
+      <path d="M64 56 L106 79 A46 46 0 0 1 64 102 Z" fill="rgba(37,99,235,.18)" stroke="#cbd5e1"/>
+      <text x="64" y="154" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">a/b</text>
+    </g>
+  `);
+}
+function iconPercent(){
+  return iconFrame(`
+    <g transform="translate(72,26)">
+      <rect x="0" y="0" width="176" height="108" rx="18" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <text x="88" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="54" font-weight="900" fill="#2563eb">%</text>
+    </g>
+  `);
+}
+function iconLines(){
+  return iconFrame(`
+    <g transform="translate(40,24)">
+      <rect x="0" y="0" width="240" height="112" rx="14" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <line x1="24" y1="32" x2="216" y2="32" stroke="#2563eb" stroke-width="6" stroke-linecap="round" opacity=".6"/>
+      <line x1="24" y1="78" x2="216" y2="54" stroke="#111827" stroke-width="6" stroke-linecap="round" opacity=".65"/>
+      <line x1="24" y1="92" x2="216" y2="92" stroke="#2563eb" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+      <text x="120" y="156" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">∥  ⟂  ×</text>
+    </g>
+  `);
+}
+function iconAngle(){
+  return iconFrame(`
+    <g transform="translate(58,18)">
+      <rect x="0" y="0" width="204" height="124" rx="14" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <path d="M46 102 L46 34 L154 102 Z" fill="rgba(37,99,235,.18)" stroke="#cbd5e1"/>
+      <path d="M46 102 L46 72 L82 102 Z" fill="rgba(37,99,235,.35)" stroke="#cbd5e1"/>
+      <text x="102" y="156" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">hoek</text>
+    </g>
+  `);
+}
+function iconClock(){
+  return iconFrame(`
+    <g transform="translate(110,22)">
+      <circle cx="50" cy="56" r="44" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <line x1="50" y1="56" x2="50" y2="28" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+      <line x1="50" y1="56" x2="74" y2="66" stroke="#2563eb" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="50" cy="56" r="4" fill="#111827"/>
+      <text x="50" y="156" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">hh:mm</text>
+    </g>
+  `);
+}
+function iconGlobe(){
+  return iconFrame(`
+    <g transform="translate(92,18)">
+      <circle cx="68" cy="64" r="52" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+      <path d="M16 64 H120" stroke="#e5e7eb" stroke-width="3"/>
+      <path d="M68 12 V116" stroke="#e5e7eb" stroke-width="3"/>
+      <path d="M34 42 C55 34 81 34 102 42" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+      <path d="M34 86 C55 94 81 94 102 86" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+      <text x="68" y="156" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">mix</text>
+    </g>
+  `);
+}
+
+/* ---------- Skill storage (per learner, per topic) ---------- */
+function learnerKey(){
+  if(authUser && authUser.id) return authUser.id;
+  const n=(profile.name||"").trim().toLowerCase();
+  const c=(profile.class||"").trim().toLowerCase();
+  const anon = localStorage.getItem("wq_anon") || (function(){
+    const id = "anon_"+Math.random().toString(16).slice(2);
+    try{ localStorage.setItem("wq_anon", id); }catch(e){}
+    return id;
+  })();
+  return `L:${n||anon}__C:${c||"?"}`;
+}
+function skillsKey(){ return "wq_skills__"+learnerKey(); }
+
+function defaultSkills(){
+  const obj={};
+  for(const t of TOPICS.map(x=>x.id)){
+    obj[t]={}; // skill -> {score, a, c, last}
+  }
+  return obj;
+}
+let skills = defaultSkills();
+function loadSkills(){
+  skills = defaultSkills();
+  try{
+    const raw = localStorage.getItem(skillsKey());
+    if(raw) skills = {...defaultSkills(), ...JSON.parse(raw)};
+  }catch(e){}
+}
+loadSkills();
+function saveSkills(){
+  try{
+    localStorage.setItem(skillsKey(), JSON.stringify(skills));
+  }catch(e){}
+  queueRemoteSave();
+}
+
+function ensureSkill(topic, sk){
+  if(!skills[topic]) skills[topic]={};
+  if(!skills[topic][sk]) skills[topic][sk]={score:40, a:0, c:0, last:Date.now()};
+}
+function decaySkill(topic, sk){
+  ensureSkill(topic, sk);
+  const m=skills[topic][sk];
+  const days=(Date.now()-m.last)/(1000*60*60*24);
+  if(days>0.5){
+    m.score = clamp(m.score - days*1.4, 15, 98);
+    m.last = Date.now();
+  }
+}
+function skillScore(topic, sk){
+  decaySkill(topic, sk);
+  return Math.round(skills[topic][sk].score);
+}
+function updateSkills(topic, tags, ok){
+  for(const sk of tags){
+    ensureSkill(topic, sk);
+    decaySkill(topic, sk);
+    const m=skills[topic][sk];
+    m.a++; if(ok) m.c++;
+    m.score = clamp(m.score + (ok?2.4:-1.9), 10, 99);
+    m.last = Date.now();
+  }
+  saveSkills();
+}
+
+/* ---------- Local run records (medals, bests, local boards) ---------- */
+const LOCAL_BOARD_KEY="wq_localboard_v1";
+let localBoard=[];
+function loadLocalBoard(){
+  localBoard=[];
+  try{
+    const raw=localStorage.getItem(LOCAL_BOARD_KEY);
+    if(raw) localBoard=JSON.parse(raw)||[];
+  }catch(e){}
+}
+function saveLocalBoard(){
+  try{ localStorage.setItem(LOCAL_BOARD_KEY, JSON.stringify(localBoard)); }catch(e){}
+}
+loadLocalBoard();
+
+function progKey(){ return "wq_prog_v1__"+learnerKey(); }
+function defaultProg(){
+  return {
+    medals:{},          // topic -> 'bronze'|'silver'|'gold'
+    bestRun:{},         // topic/global -> bestScoreToday? (we keep daily)
+  };
+}
+let prog=defaultProg();
+function loadProg(){
+  prog=defaultProg();
+  try{
+    const raw=localStorage.getItem(progKey());
+    if(raw) prog={...defaultProg(), ...JSON.parse(raw)};
+  }catch(e){}
+}
+loadProg();
+
+
+/* ---------- Remote sync (profiles table) ---------- */
+let remoteSaveTimer=null;
+
+function queueRemoteSave(){
+  if(!authUser) return;
+  if(remoteSaveTimer) clearTimeout(remoteSaveTimer);
+  remoteSaveTimer=setTimeout(()=>{
+    upsertProfileRemote().catch(err=>console.warn("Remote save failed:", err?.message||err));
+  }, 600);
+}
+
+async function upsertProfileRemote(){
+  if(!authUser) return;
+  const payload={
+    user_id: authUser.id,
+    username: profile.username || `user_${authUser.id.slice(0,8)}`,
+    name: profile.name || "",
+    class: profile.class || "",
+    settings: profile.settings || {},
+    skills: skills || {},
+    prog: prog || {},
+    updated_at: new Date().toISOString()
+  };
+  const {error} = await sb.from('profiles').upsert(payload, {onConflict:'user_id'});
+  if(error) throw error;
+}
+
+function applyRemoteProfile(row){
+  if(!row) return;
+  if(row.username) profile.username = row.username;
+  if(row.name) profile.name = row.name;
+  if(row.class) profile.class = row.class;
+  if(row.settings) profile.settings = {...profile.settings, ...row.settings};
+  if(row.skills) skills = {...defaultSkills(), ...row.skills};
+  if(row.prog) prog = {...defaultProg(), ...row.prog};
+
+  saveProfile();
+  try{ localStorage.setItem(skillsKey(), JSON.stringify(skills)); }catch(e){}
+  try{ localStorage.setItem(progKey(), JSON.stringify(prog)); }catch(e){}
+  updateUserPill();
+}
+
+async function fetchProfileRow(){
+  if(!authUser) return null;
+  const {data, error} = await sb
+    .from('profiles')
+    .select('username,name,class,settings,skills,prog')
+    .eq('user_id', authUser.id)
+    .maybeSingle();
+  if(error){
+    // in sommige gevallen geeft PostgREST "0 rows" als error; dan behandelen we dat als null
+    if(!String(error.message||"").toLowerCase().includes("0 rows")) throw error;
+  }
+  return data || null;
+}
+
+async function ensureProfileRow(seed={}){
+  let row = await fetchProfileRow();
+  if(row) return row;
+
+  const u = cleanUsername(seed.username || profile.username || "");
+  const ins = {
+    user_id: authUser.id,
+    username: u || `user_${authUser.id.slice(0,8)}`,
+    name: (seed.name || profile.name || u || "Speler").trim(),
+    class: (seed.class || profile.class || "").trim(),
+    settings: profile.settings,
+    skills: skills,
+    prog: prog
+  };
+  const {error} = await sb.from('profiles').insert(ins);
+  if(error) throw error;
+  return ins;
+}
+
+function loadLearnerStores(){
+  loadSkills();
+  loadProg();
+  // localBoard is device-wide, so no per-user reload needed
+}
+function saveProg(){
+  try{
+    localStorage.setItem(progKey(), JSON.stringify(prog));
+  }catch(e){}
+  queueRemoteSave();
+}
+
+function medalForScore(score){
+  if(score>=26) return "gold";
+  if(score>=18) return "silver";
+  if(score>=10) return "bronze";
+  return "";
+}
+function medalEmoji(m){
+  return m==="gold"?"🥇":m==="silver"?"🥈":m==="bronze"?"🥉":"";
+}
+function cupEmoji(rank){
+  if(rank===1) return "🏆";
+  if(rank===2) return "🥈";
+  if(rank===3) return "🥉";
+  return "";
+}
+
+/* ---------- Supabase (REST) ---------- */
+function sbEnabled(){ return true; }
+function sbHeaders(){ return {}; };
+
+async function sbFetchOverall(){
+  const day = todayKey();
+  const {data, error} = await sb
+    .from("scores_best")
+    .select("name,class,score,acc,duration_ms,created_at")
+    .eq("day", day)
+    .eq("mode", "global")
+    .eq("topic", "global")
+    .order("score", {ascending:false})
+    .order("acc", {ascending:false})
+    .order("duration_ms", {ascending:true})
+    .order("created_at", {ascending:true})
+    .limit(20);
+  if(error) throw error;
+  return data || [];
+}
+async function sbFetchTopic(topic){
+  const day = todayKey();
+  const {data, error} = await sb
+    .from("scores_best")
+    .select("name,class,score,acc,duration_ms,created_at,topic")
+    .eq("day", day)
+    .eq("mode", "topic")
+    .eq("topic", topic)
+    .order("score", {ascending:false})
+    .order("acc", {ascending:false})
+    .order("duration_ms", {ascending:true})
+    .order("created_at", {ascending:true})
+    .limit(20);
+  if(error) throw error;
+  return data || [];
+}
+function postRateKey(){ return "wq_last_post__"+learnerKey(); }
+function canPostNow(){
+  const last = Number(localStorage.getItem(postRateKey())||"0");
+  return (Date.now()-last) > 30000; // 30s
+}
+function markPosted(){ localStorage.setItem(postRateKey(), String(Date.now())); }
+async function sbPostScore(row){
+  if(!authUser) throw new Error("Niet ingelogd.");
+  if(!canPostNow()) throw new Error("Even wachten… (anti-spam)");
+  const payload = {
+    user_id: authUser.id,
+    day: todayKey(),
+    mode: row.mode,
+    topic: row.topic || "global",
+    name: profile.name,
+    class: profile.class,
+    score: row.score|0,
+    acc: row.acc|0,
+    duration_ms: row.duration_ms|0
+  };
+  const {error} = await sb.from("scores").insert(payload);
+  if(error) throw error;
+  markPosted();
+}
+
+/* ---------- Question bank (bundel-achtige templates) ---------- */
+const UNIT_FACT={l:1,dl:0.1,cl:0.01,ml:0.001};
+const UNITS=["l","dl","cl","ml"];
+function convert(val, fromU, toU){
+  const f=UNIT_FACT[norm(fromU)], t=UNIT_FACT[norm(toU)];
+  return (val*f)/t;
+}
+function stepsBetween(fromU,toU){
+  const idx={l:0,dl:1,cl:2,ml:3};
+  return idx[norm(toU)]-idx[norm(fromU)];
+}
+function ladderHintShort(){
+  return "Ladder: l → dl → cl → ml. Rechts ×10, links ÷10.";
+}
+
+/* Visual generators */
+function svgBottleFull(labelTop="Drinkbus"){
+  // ensured fully visible by viewBox + padding in visualWrap
+  return `<svg viewBox="0 0 560 260" role="img" aria-label="drinkbus">
+    <rect x="8" y="8" width="544" height="244" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="40" y="58" font-family="Inter,Arial" font-size="24" font-weight="900" fill="#111827">${labelTop}</text>
+    <text x="40" y="86" font-family="Inter,Arial" font-size="16" font-weight="800" fill="#6b7280">Schat de inhoudsmaat of herleid.</text>
+
+    <g transform="translate(330,48)">
+      <rect x="36" y="0" width="84" height="26" rx="10" fill="#e5e7eb" stroke="#cbd5e1"/>
+      <rect x="20" y="20" width="116" height="170" rx="42" fill="#fff" stroke="#cbd5e1" stroke-width="4"/>
+      <path d="M28 128 Q78 166 128 128 L128 176 Q78 216 28 176 Z" fill="rgba(37,99,235,.20)"/>
+      <line x1="20" y1="64" x2="136" y2="64" stroke="#e5e7eb"/>
+      <line x1="20" y1="96" x2="136" y2="96" stroke="#e5e7eb"/>
+      <line x1="20" y1="128" x2="136" y2="128" stroke="#e5e7eb"/>
+      <line x1="20" y1="160" x2="136" y2="160" stroke="#e5e7eb"/>
+    </g>
+
+    <g transform="translate(40,120)">
+      <rect x="0" y="0" width="250" height="110" rx="18" fill="#f7fafc" stroke="#e5e7eb"/>
+      <text x="18" y="34" font-family="Inter,Arial" font-size="16" font-weight="900" fill="#111827">Denk aan:</text>
+      <text x="18" y="60" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#6b7280">• ml voor klein</text>
+      <text x="18" y="82" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#6b7280">• cl voor drinken</text>
+      <text x="18" y="104" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#6b7280">• l voor groot</text>
+    </g>
+  </svg>`;
+}
+
+function svgBarChart(data, yMax, title){
+  // data: [{label, value}]
+  // with gridlines (major + minor)
+  const W=560, H=300, padL=56, padR=16, padT=54, padB=54;
+  const innerW=W-padL-padR, innerH=H-padT-padB;
+  const bars=data.length;
+  const gap=innerW/(bars*2);
+  const barW=gap;
+  const max=yMax;
+  const y = (v)=> padT + innerH*(1 - v/max);
+  const base = padT+innerH;
+  // grid: 0..max step = max/5, minor at half step
+  const major=5;
+  const step=max/major;
+  let grid="";
+  for(let i=0;i<=major;i++){
+    const yy=y(i*step);
+    grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#e5e7eb" stroke-width="2"/>`;
+    if(i<major){
+      const yy2=y(i*step + step/2);
+      grid += `<line x1="${padL}" y1="${yy2}" x2="${W-padR}" y2="${yy2}" stroke="#eef2f7" stroke-width="2"/>`;
+    }
+    grid += `<text x="${padL-12}" y="${yy+6}" text-anchor="end" font-family="Inter,Arial" font-size="12" font-weight="900" fill="#6b7280">${i*step}</text>`;
+  }
+  let barsSvg="";
+  data.forEach((d, i)=>{
+    const x = padL + gap + i*(barW+gap);
+    const top = y(d.value);
+    const h = base - top;
+    barsSvg += `<rect x="${x}" y="${top}" width="${barW}" height="${h}" rx="10" fill="rgba(37,99,235,.28)" stroke="#cbd5e1"/>`;
+    barsSvg += `<text x="${x+barW/2}" y="${H-22}" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="900" fill="#111827">${d.label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="staafdiagram">
+    <rect x="8" y="8" width="${W-16}" height="${H-16}" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="${padL}" y="40" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">${title}</text>
+    ${grid}
+    <line x1="${padL}" y1="${base}" x2="${W-padR}" y2="${base}" stroke="#cbd5e1" stroke-width="3"/>
+    ${barsSvg}
+  </svg>`;
+}
+
+function svgPieChart(labels, values, title, showValues=false){
+  // truthful pie chart by proportions
+  const total = values.reduce((a,b)=>a+b,0);
+  let a0 = -Math.PI/2;
+  const cx=280, cy=160, r=86;
+  let slices="";
+  for(let i=0;i<values.length;i++){
+    const frac=values[i]/total;
+    const a1=a0+frac*Math.PI*2;
+    const x0=cx + r*Math.cos(a0), y0=cy + r*Math.sin(a0);
+    const x1=cx + r*Math.cos(a1), y1=cy + r*Math.sin(a1);
+    const large = (a1-a0) > Math.PI ? 1 : 0;
+    const p = `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+    const op = 0.18 + (i%4)*0.08;
+    slices += `<path d="${p}" fill="rgba(37,99,235,${op})" stroke="#cbd5e1"/>`;
+    a0=a1;
+  }
+  // legend
+  let legend="";
+  labels.forEach((lab,i)=>{
+    const y=60 + i*22;
+    const op = 0.18 + (i%4)*0.08;
+    legend += `<rect x="62" y="${y-12}" width="14" height="14" rx="4" fill="rgba(37,99,235,${op})" stroke="#cbd5e1"/>`;
+    legend += `<text x="84" y="${y}" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#111827">${lab}${showValues?` (${values[i]})`:``}</text>`;
+  });
+  return `<svg viewBox="0 0 560 300" role="img" aria-label="cirkeldiagram">
+    <rect x="8" y="8" width="544" height="284" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="56" y="44" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">${title}</text>
+    ${legend}
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+    ${slices}
+  </svg>`;
+}
+
+function svgBarChartFine(categories, values, yMax=2.0, minorStep=0.1, title="Staafdiagram"){
+  const W=560,H=280, pad={l:52,r:18,t:48,b:44};
+  const innerW=W-pad.l-pad.r, innerH=H-pad.t-pad.b;
+  const majorStep = (yMax>=2 ? 0.5 : (yMax>=1 ? 0.2 : 0.1));
+  let grid="";
+  for(let y=0;y<=yMax+1e-9;y+=minorStep){
+    const yy=pad.t+innerH-(y/yMax)*innerH;
+    const major = Math.abs((y/majorStep)-Math.round(y/majorStep))<1e-6;
+    grid+=`<line x1="${pad.l}" y1="${yy.toFixed(2)}" x2="${pad.l+innerW}" y2="${yy.toFixed(2)}" stroke="#e5e7eb" stroke-width="1" opacity="${major?0.95:0.35}"/>`;
+    if(major){
+      grid+=`<text x="${pad.l-10}" y="${yy+4}" text-anchor="end" font-family="Inter,Arial" font-size="12" font-weight="800" fill="#6b7280">${formatNL(Number(y.toFixed(2)))}</text>`;
+    }
+  }
+  const n=categories.length;
+  const gap=16;
+  const barW=(innerW - gap*(n-1))/n;
+  let bars="", labels="";
+  for(let i=0;i<n;i++){
+    const v=values[i];
+    const x=pad.l + i*(barW+gap);
+    const h=(v/yMax)*innerH;
+    const y=pad.t + innerH - h;
+    bars+=`<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="14" fill="#2563eb" opacity=".55"/>`;
+    // value label
+    bars+=`<text x="${x+barW/2}" y="${y-6}" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="900" fill="#111827">${formatNL(v)}</text>`;
+    labels+=`<text x="${x+barW/2}" y="${H-18}" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="900" fill="#374151">${categories[i]}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+    <rect x="8" y="8" width="${W-16}" height="${H-16}" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="28" y="40" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">${title}</text>
+    ${grid}
+    <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+innerH}" stroke="#111827" stroke-width="2" opacity=".45"/>
+    <line x1="${pad.l}" y1="${pad.t+innerH}" x2="${pad.l+innerW}" y2="${pad.t+innerH}" stroke="#111827" stroke-width="2" opacity=".45"/>
+    ${bars}
+    ${labels}
+  </svg>`;
+}
+
+function svgFractionGrid(rows, cols, filledCount, title="Breuk"){
+  const W=560,H=280, pad=34;
+  const gridW=W-2*pad, gridH=H-2*pad-36;
+  const cellW=gridW/cols, cellH=gridH/rows;
+  const total=rows*cols;
+  const idx=[...Array(total)].map((_,i)=>i);
+  shuffle(idx);
+  const filledSet=new Set(idx.slice(0, Math.min(filledCount,total)));
+  let cells="";
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const i=r*cols+c;
+      const x=pad + c*cellW, y=pad+36 + r*cellH;
+      const fill=filledSet.has(i) ? "rgba(37,99,235,.25)" : "rgba(255,255,255,1)";
+      cells += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="10" fill="${fill}" stroke="#e5e7eb" stroke-width="2"/>`;
+      if(filledSet.has(i)){
+        cells += `<path d="M ${x+cellW*0.18} ${y+cellH*0.55} L ${x+cellW*0.42} ${y+cellH*0.75} L ${x+cellW*0.82} ${y+cellH*0.25}" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>`;
+      }
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+    <rect x="8" y="8" width="${W-16}" height="${H-16}" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="28" y="40" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">${title}</text>
+    ${cells}
+  </svg>`;
+}
+
+function svgSimpleTable(title, headers, rows){
+  const W=560;
+  const rowH=34;
+  const headH=40;
+  const H = 90 + headH + rows.length*rowH;
+  const pad=20;
+  const colW = (W-2*pad)/headers.length;
+  let out = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+    <rect x="8" y="8" width="${W-16}" height="${H-16}" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="28" y="44" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">${title}</text>
+    <rect x="${pad}" y="62" width="${W-2*pad}" height="${headH}" rx="14" fill="rgba(17,24,39,.04)" stroke="#e5e7eb"/>
+  `;
+  for(let c=0;c<headers.length;c++){
+    const x=pad + c*colW + 12;
+    out += `<text x="${x}" y="${62+26}" font-family="Inter,Arial" font-size="13" font-weight="900" fill="#111827">${headers[c]}</text>`;
+  }
+  let y0=62+headH;
+  for(let r=0;r<rows.length;r++){
+    const y=y0 + r*rowH;
+    out += `<rect x="${pad}" y="${y}" width="${W-2*pad}" height="${rowH}" rx="12" fill="#fff" stroke="#e5e7eb"/>`;
+    for(let c=0;c<headers.length;c++){
+      const x=pad + c*colW + 12;
+      out += `<text x="${x}" y="${y+22}" font-family="Inter,Arial" font-size="13" font-weight="800" fill="#374151">${rows[r][c]}</text>`;
+    }
+  }
+  out += `</svg>`;
+  return out;
+}
+
+function addTime(h,m,dh,dm){
+  const total = (h*60+m) + (dh*60+dm);
+  const mod = ((total%(24*60)) + 24*60)%(24*60);
+  const hh=String(Math.floor(mod/60)).padStart(2,"0");
+  const mm=String(mod%60).padStart(2,"0");
+  return {h:hh,m:mm};
+}
+
+function svgAngle(deg){
+  // keep always in viewBox
+  const W=560,H=280;
+  const cx=160, cy=200;
+  const r=120;
+  const a0 = -Math.PI/2; // vertical up
+  const a1 = a0 + (deg*Math.PI/180);
+  const x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0);
+  const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+  const large = deg>180?1:0;
+  // arc radius scaled to the main radius so it stays inside the viewBox
+  const rr = Math.min(54, Math.round(r * 0.45));
+  const sx = cx + rr * Math.cos(a0), sy = cy + rr * Math.sin(a0);
+  const ex = cx + rr * Math.cos(a1), ey = cy + rr * Math.sin(a1);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="hoek">
+    <rect x="8" y="8" width="${W-16}" height="${H-16}" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="40" y="52" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">Hoek</text>
+    <text x="40" y="80" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#6b7280">${deg}°</text>
+
+    <line x1="${cx}" y1="${cy}" x2="${x0}" y2="${y0}" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${x1}" y2="${y1}" stroke="#2563eb" stroke-width="6" stroke-linecap="round"/>
+
+    <path d="M ${cx} ${cy} L ${sx} ${sy} A ${rr} ${rr} 0 ${large} 1 ${ex} ${ey} Z"
+          fill="rgba(37,99,235,.18)" stroke="#cbd5e1"/>
+
+    <circle cx="${cx}" cy="${cy}" r="6" fill="#111827"/>
+  </svg>`;
+}
+
+function svgClock(h, m){
+  // analog clock for reading
+  const W=560,H=280;
+  const cx=180, cy=150, r=92;
+  const aMin = (m/60)*Math.PI*2 - Math.PI/2;
+  const aHour = ((h%12)/12)*Math.PI*2 + (m/60)*(Math.PI/6) - Math.PI/2;
+  const mx=cx + r*0.88*Math.cos(aMin), my=cy + r*0.88*Math.sin(aMin);
+  const hx=cx + r*0.58*Math.cos(aHour), hy=cy + r*0.58*Math.sin(aHour);
+  // ticks
+  let ticks="";
+  for(let i=0;i<12;i++){
+    const a=i*(Math.PI*2/12) - Math.PI/2;
+    const x0=cx + r*0.88*Math.cos(a), y0=cy + r*0.88*Math.sin(a);
+    const x1=cx + r*0.98*Math.cos(a), y1=cy + r*0.98*Math.sin(a);
+    ticks += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="klok">
+    <rect x="8" y="8" width="${W-16}" height="${H-16}" rx="22" fill="#fff" stroke="#e5e7eb"/>
+    <text x="40" y="52" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">Klok</text>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+    ${ticks}
+    <line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="#2563eb" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#111827"/>
+    <text x="360" y="140" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">Noteer:</text>
+    <text x="360" y="170" font-family="Inter,Arial" font-size="18" font-weight="900" fill="#6b7280">hh:mm</text>
+  </svg>`;
+}
+
+/* Question constructors */
+function qMc(topic, skill, prompt, options, answer, visualHtml=null, sub=null){
+  return {topic, skill, kind:"mc", prompt, sub, options, answer, visualHtml};
+}
+function qInput(topic, skill, prompt, answer, inputKind="number", unit=null, visualHtml=null, tol=0.01, sub=null){
+  return {topic, skill, kind:"input", prompt, sub, inputKind, unit, answer, tol, visualHtml};
+}
+
+/* Bank per topic: each skill has list of generator fns returning question */
+const BANK = {
+  inhoud:{
+    "ladder":[
+      ()=> qInput("inhoud","ladder","Herleid: 3 l = ____ ml", 3000, "number","ml", svgBottleFull("Herleid")),
+      ()=> qInput("inhoud","ladder","Herleid: 75 cl = ____ l", 0.75, "number","l", svgBottleFull("Herleid"), 0.01, "Tip: 1 l = 100 cl"),
+      ()=> qInput("inhoud","ladder","Herleid: 450 ml = ____ cl", 45, "number","cl", svgBottleFull("Drinkbus"), 0.01),
+      ()=> qInput("inhoud","ladder","Herleid: 2,5 l = ____ ml", 2500, "number","ml", svgBottleFull("Herleid"), 0.01),
+      ()=> qInput("inhoud","ladder","Herleid: 800 ml = ____ l", 0.8, "number","l", svgBottleFull("Herleid"), 0.01),
+      ()=> {
+        const val=[250,500,650,750,1000,1200][Math.floor(Math.random()*6)];
+        return qInput("inhoud","ladder",`Herleid: ${val} ml = ____ dl`, convert(val,"ml","dl"), "number","dl", svgBottleFull("Herleid"), 0.01);
+      },
+      ()=> {
+        const val=[0.4,0.6,0.75,1.2,1.5][Math.floor(Math.random()*5)];
+        return qInput("inhoud","ladder",`Herleid: ${formatNL(val)} l = ____ cl`, convert(val,"l","cl"), "number","cl", svgBottleFull("Herleid"), 0.01);
+      },
+      ()=> {
+        const val=[12,25,30,55,75][Math.floor(Math.random()*5)];
+        return qInput("inhoud","ladder",`Herleid: ${val} cl = ____ ml`, convert(val,"cl","ml"), "number","ml", svgBottleFull("Herleid"), 0.01);
+      }
+    ],
+    "unit_choice":[
+      ()=> qMc("inhoud","unit_choice","Vul de juiste inhoudsmaat in:\nEen fles wijn heeft een inhoud van 75 ____.",["ml","cl","dl","l"],"cl", svgBottleFull("Context")),
+      ()=> qMc("inhoud","unit_choice","Vul de juiste inhoudsmaat in:\nEen drinkbus heeft een inhoud van 500 ____.",["ml","cl","dl","l"],"ml", svgBottleFull("Drinkbus")),
+      ()=> qMc("inhoud","unit_choice","Vul de juiste inhoudsmaat in:\nEen kookpot heeft een inhoud van 3 ____.",["ml","cl","dl","l"],"l", svgBottleFull("Context")),
+      ()=> qMc("inhoud","unit_choice","Vul de juiste inhoudsmaat in:\nEen spuitje heeft een inhoud van 5 ____.",["ml","cl","dl","l"],"ml", svgBottleFull("Context")),
+      ()=> qMc("inhoud","unit_choice","Vul de juiste inhoudsmaat in:\nEen emmer heeft een inhoud van 10 ____.",["ml","cl","dl","l"],"l", svgBottleFull("Context")),
+      ()=> qMc("inhoud","unit_choice","Vul de juiste inhoudsmaat in:\nEen parfumstaaltje is 2 ____.",["ml","cl","dl","l"],"ml", svgBottleFull("Context"))
+    ]
+  },
+
+  grafieken:{
+    "bar_read":[
+      ()=> {
+        const data=[{label:"Appel",value:4},{label:"Banaan",value:7},{label:"Druif",value:5},{label:"Peer",value:6}];
+        const v=svgBarChart(data,10,"Aantal stukken fruit");
+        return qMc("grafieken","bar_read","Welke is het meest?",["Appel","Banaan","Druif","Peer"],"Banaan", v);
+      },
+      ()=> {
+        const data=[{label:"Ma",value:12},{label:"Di",value:18},{label:"Wo",value:10},{label:"Do",value:14}];
+        const v=svgBarChart(data,20,"Verkochte wafels");
+        return qMc("grafieken","bar_read","Op welke dag werden het meeste wafels verkocht?",["Ma","Di","Wo","Do"],"Di", v);
+      },
+      ()=> {
+        const data=[{label:"A",value:6},{label:"B",value:9},{label:"C",value:3},{label:"D",value:8}];
+        const v=svgBarChart(data,10,"Punten per groep");
+        return qInput("grafieken","bar_read","Lees af: hoeveel punten heeft groep B?", 9, "number", null, v, 0.01);
+      }
+    ],
+    "bar_compare":[
+      ()=> {
+        const data=[{label:"Rood",value:8},{label:"Blauw",value:5},{label:"Groen",value:11},{label:"Geel",value:6}];
+        const v=svgBarChart(data,12,"Stemmen per kleur");
+        return qInput("grafieken","bar_compare","Hoeveel meer stemmen heeft Groen dan Blauw?", 6, "number", null, v, 0.01);
+      },
+      ()=> {
+        // Bundel-achtig: prijzen uit grafiek (met fijne tussenlijnen)
+        const cats=["Tomaat","Komkommer","Paprika","Wortel"];
+        const vals=[1.4,1.2,1.6,1.0]; // euro
+        const v=svgBarChartFine(cats, vals, 2.0, 0.1, "Prijs per kg (in €)");
+        const i=Math.floor(Math.random()*cats.length);
+        return qInput("grafieken","bar_compare",`Lees af: wat is de prijs van ${cats[i]} (€/kg)?`, vals[i], "number", "€", v, 0.02, "Schrijf met komma (bv. 1,4)");
+      },
+      ()=> {
+        const cats=["Tomaat","Komkommer","Paprika","Wortel"];
+        const vals=[1.4,1.2,1.6,1.0];
+        const v=svgBarChartFine(cats, vals, 2.0, 0.1, "Prijs per kg (in €)");
+        return qMc("grafieken","bar_compare","Wat is het goedkoopst?", cats, "Wortel", v);
+      }
+    ],
+    "pie_read":[
+      ()=> {
+        const labels=["Wisk","Frans","LO","ICT"];
+        const values=[8,5,3,4];
+        const v=svgPieChart(labels, values, "Lievelingsvak (klas)", true);
+        return qInput("grafieken","pie_read","In totaal namen ____ leerlingen deel.", values.reduce((a,b)=>a+b,0), "number", null, v, 0.01);
+      },
+      ()=> {
+        const labels=["Bus","Fiets","Te voet","Auto"];
+        const values=[6,7,4,3];
+        const v=svgPieChart(labels, values, "Hoe kom je naar school?", true);
+        return qInput("grafieken","pie_read","Hoeveel leerlingen komen met de fiets?", 7, "number", null, v, 0.01);
+      },
+      ()=> {
+        const labels=["Bus","Fiets","Te voet","Auto"];
+        const values=[6,7,4,3];
+        const v=svgPieChart(labels, values, "Hoe kom je naar school?", true);
+        return qInput("grafieken","pie_read","Hoeveel meer leerlingen komen met de fiets dan met de auto?", 4, "number", null, v, 0.01);
+      }
+    ],
+    "pie_truth":[
+      ()=> {
+        const labels=["Wisk","Frans","LO","ICT"];
+        const values=[8,5,3,4];
+        const v=svgPieChart(labels, values, "Lievelingsvak (klas)", true);
+        return qMc("grafieken","pie_truth","Waar/niet waar: Wiskunde is het populairst.",["waar","niet waar"],"waar", v);
+      },
+      ()=> {
+        const labels=["Bus","Fiets","Te voet","Auto"];
+        const values=[6,7,4,3];
+        const v=svgPieChart(labels, values, "Hoe kom je naar school?", true);
+        return qMc("grafieken","pie_truth","Waar/niet waar: Te voet is minder dan met de bus.",["waar","niet waar"],"waar", v);
+      }
+    ]
+  },
+
+  gemmid:{
+    "median":[
+      ()=> {
+        const arr=[7,2,9];
+        const sorted=arr.slice().sort((a,b)=>a-b);
+        const med=sorted[1];
+        return qInput("gemmid","median",`Rik (Frans): ${arr.join(" - ")}\nWat is de mediaan?`, med, "number", null, null, 0.01);
+      },
+      ()=> {
+        const arr=[5,4,9,9,5,7]; // bundel
+        const s=arr.slice().sort((a,b)=>a-b);
+        const med=(s[2]+s[3])/2;
+        return qInput("gemmid","median",`Gegevens: ${arr.join(" - ")}\nWat is de mediaan?`, med, "number", null, null, 0.02, "Bij een even aantal: gemiddelde van de 2 middelste.");
+      },
+      ()=> {
+        const arr=shuffle([3,3,6,8,10]);
+        const s=arr.slice().sort((a,b)=>a-b);
+        const med=s[Math.floor(s.length/2)];
+        return qInput("gemmid","median",`Gegevens: ${arr.join(" - ")}\nMediaan = ?`, med, "number", null, null, 0.01);
+      }
+    ],
+    "mean":[
+      ()=> {
+        const arr=shuffle([4,6,8,2]);
+        const mean=arr.reduce((a,b)=>a+b,0)/arr.length;
+        return qInput("gemmid","mean",`Gegevens: ${arr.join(" - ")}\nWat is het gemiddelde?`, mean, "number", null, null, 0.02);
+      },
+      ()=> {
+        const arr=shuffle([7,9,5,3,6]);
+        const mean=arr.reduce((a,b)=>a+b,0)/arr.length;
+        return qInput("gemmid","mean",`Scores: ${arr.join(" - ")}\nGemiddelde = ?`, mean, "number", null, null, 0.02);
+      },
+      ()=> {
+        const months=["Jan","Feb","Mrt"];
+        const prices=[1.40,1.35,1.15];
+        const v=svgSimpleTable("Tomaten (€/kg)",["Maand","Prijs"], months.map((m,i)=>[m, formatNL(prices[i])]));
+        const mean=Math.round((prices.reduce((a,b)=>a+b,0)/prices.length)*100)/100; // exact to cents
+        return qInput("gemmid","mean","Wat is de gemiddelde prijs van tomaten (€/kg)?", mean, "number", "€", v, 0.02, "Schrijf met komma (bv. 1,30)");
+      },
+      ()=> {
+        const total=285, days=30;
+        const mean=total/days;
+        const v=svgSimpleTable("Gemiddelde per dag",["Totaal","Dagen"], [[`${total} €`, `${days}`]]);
+        return qInput("gemmid","mean",`Je gaf €${total} uit in ${days} dagen.\nGemiddeld per dag = ____ €`, mean, "number", "€", v, 0.02);
+      },
+      ()=> {
+        const rows=[["Ma",4],["Di",6],["Wo",3],["Do",7],["Vr",5]];
+        const v=svgSimpleTable("Temperatuur (°C)",["Dag","°C"], rows.map(r=>[r[0], String(r[1])]));
+        const mean=rows.reduce((a,b)=>a+b[1],0)/rows.length;
+        return qInput("gemmid","mean","Wat is de gemiddelde temperatuur (°C)?", mean, "number", "°C", v, 0.02);
+      }
+    ]
+  },
+
+  massa:{
+    "convert":[
+      ()=> qInput("massa","convert","Herleid: 2 500 g = ____ kg", 2.5, "number","kg", null, 0.02),
+      ()=> qInput("massa","convert","Herleid: 0,75 kg = ____ g", 750, "number","g", null, 0.01),
+      ()=> qInput("massa","convert","Herleid: 3 ton = ____ kg", 3000, "number","kg", null, 0.01),
+      ()=> qInput("massa","convert","Herleid: 2 980 kg = ____ ton", 2.98, "number","ton", null, 0.02),
+      ()=> qInput("massa","convert","Herleid: 80 mg = ____ g", 0.08, "number","g", null, 0.02),
+      ()=> qInput("massa","convert","Herleid: 4 000 mg = ____ g", 4, "number","g", null, 0.01)
+    ],
+    "context":[
+      ()=> qInput("massa","context","4 zakjes van 250 g samen wegen ____ g.", 1000, "number","g"),
+      ()=> qInput("massa","context","4 zakjes van 250 g samen wegen ____ kg.", 1, "number","kg", null, 0.01),
+      ()=> qInput("massa","context","Vlees: 200 g = ____ kg", 0.2, "number","kg", null, 0.01),
+      ()=> qInput("massa","context","Een helikopter weegt 2 980 kg.\nDat is ____ ton.", 2.98, "number","ton", null, 0.02)
+    ],
+    "unit_choice":[
+      ()=> qMc("massa","unit_choice","Kies de juiste eenheid: een banaan weegt ongeveer 120 …",["mg","g","kg","ton"],"g"),
+      ()=> qMc("massa","unit_choice","Kies de juiste eenheid: een auto weegt ongeveer 1,2 …",["mg","g","kg","ton"],"ton"),
+      ()=> qMc("massa","unit_choice","Kies de juiste eenheid: een paperclip weegt ongeveer 1 …",["mg","g","kg","ton"],"g"),
+      ()=> qMc("massa","unit_choice","Kies de juiste eenheid: een vlieg weegt ongeveer 80 …",["mg","g","kg","ton"],"mg")
+    ]
+  },
+
+  breuken:{
+    "simplify":[
+      ()=> {
+        const a=[6,8,9,10,12,14,15,16,18,20][Math.floor(Math.random()*10)];
+        const b=[8,10,12,14,15,16,18,20,24,30][Math.floor(Math.random()*10)];
+        const g=gcd(a,b); const sa=a/g, sb=b/g;
+        return qInput("breuken","simplify",`Vereenvoudig: ${a}/${b}`, `${sa}/${sb}`, "fraction");
+      },
+      ()=> {
+        const a=12, b=18;
+        const g=gcd(a,b);
+        const sa=a/g, sb=b/g;
+        return qInput("breuken","simplify",`Vereenvoudig: ${a}/${b}`, `${sa}/${sb}`, "fraction");
+      }
+    ],
+    "fraction_of":[
+      ()=> qInput("breuken","fraction_of","Bereken: 3/4 van 20 = ____", 15, "number"),
+      ()=> qInput("breuken","fraction_of","Bereken: 2/5 van 40 = ____", 16, "number"),
+      ()=> qInput("breuken","fraction_of","Bereken: 1/3 van 21 = ____", 7, "number"),
+      ()=> qInput("breuken","fraction_of","Bereken: 3/8 van 64 = ____", 24, "number")
+    ],
+    "read_fraction":[
+      ()=> {
+        const rows=3, cols=4;
+        const filled=8; // 8/12 = 2/3
+        const v=svgFractionGrid(rows, cols, filled, "Welk deel is ingekleurd?");
+        return qInput("breuken","read_fraction","Schrijf als breuk (vereenvoudigd).", "2/3", "fraction", null, v);
+      },
+      ()=> {
+        const rows=4, cols=4;
+        const filled=6; // 6/16=3/8
+        const v=svgFractionGrid(rows, cols, filled, "Welk deel is ingekleurd?");
+        return qInput("breuken","read_fraction","Schrijf als breuk (vereenvoudigd).", "3/8", "fraction", null, v);
+      },
+      ()=> {
+        const rows=2, cols=5;
+        const filled=3; // 3/10
+        const v=svgFractionGrid(rows, cols, filled, "Welk deel is ingekleurd?");
+        return qInput("breuken","read_fraction","Schrijf als breuk.", "3/10", "fraction", null, v);
+      }
+    ],
+    "complement":[
+      ()=> qInput("breuken","complement","Eén op drie haaiensoorten is bedreigd.\nWelk deel is NIET bedreigd?", "2/3", "fraction"),
+      ()=> qInput("breuken","complement","Van een tuin is 1/4 bloemen.\nWelk deel is GEEN bloemen?", "3/4", "fraction")
+    ]
+  },
+
+  procent:{
+    "percent_of":[
+      ()=> qInput("procent","percent_of","Bereken: 25% van 80 = ____", 20, "number"),
+      ()=> qInput("procent","percent_of","Bereken: 10% van 1 800 = ____", 180, "number"),
+      ()=> qInput("procent","percent_of","Bereken: 15% van 200 = ____", 30, "number"),
+      ()=> qInput("procent","percent_of","Bereken: 5% van 60 = ____", 3, "number")
+    ],
+    "discount":[
+      ()=> qInput("procent","discount","Korting: €80 met 25% korting → betaal ____ €", 60, "number","€", null, 0.02),
+      ()=> qInput("procent","discount","Korting: €50 met 10% korting → betaal ____ €", 45, "number","€", null, 0.02),
+      ()=> qInput("procent","discount","Korting: €120 met 20% korting → betaal ____ €", 96, "number","€", null, 0.02)
+    ],
+    "increase":[
+      ()=> qInput("procent","increase","Stijging: €50 wordt 10% duurder → nieuwe prijs ____ €", 55, "number","€", null, 0.02),
+      ()=> qInput("procent","increase","Stijging: €80 wordt 25% duurder → nieuwe prijs ____ €", 100, "number","€", null, 0.02)
+    ],
+    "complement":[
+      ()=> qInput("procent","complement","65% van de klas is aanwezig.\n____% is niet aanwezig.", 35, "number"),
+      ()=> qInput("procent","complement","Een batterij is 40% vol.\n____% is nog leeg.", 60, "number")
+    ]
+  },
+
+  lijnen:{
+    "relations":[
+      ()=> qMc("lijnen","relations","Welke relatie is juist?\nTwee evenwijdige rechten zijn …",["∥","⟂","×"],"∥"),
+      ()=> qMc("lijnen","relations","Welke relatie is juist?\nTwee loodrechte rechten zijn …",["∥","⟂","×"],"⟂"),
+      ()=> qMc("lijnen","relations","Welke relatie is juist?\nTwee snijdende rechten zijn …",["∥","⟂","×"],"×"),
+      ()=> {
+        const v = `<svg viewBox="0 0 560 260" role="img" aria-label="lijnen">
+          <rect x="8" y="8" width="544" height="244" rx="22" fill="#fff" stroke="#e5e7eb"/>
+          <text x="40" y="54" font-family="Inter,Arial" font-size="20" font-weight="900" fill="#111827">Lijnen</text>
+          <line x1="90" y1="100" x2="470" y2="100" stroke="#2563eb" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+          <line x1="90" y1="150" x2="470" y2="150" stroke="#2563eb" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+          <line x1="300" y1="70" x2="300" y2="200" stroke="#111827" stroke-width="7" stroke-linecap="round" opacity=".65"/>
+          <text x="92" y="216" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">Blauw: evenwijdig</text>
+          <text x="300" y="216" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="900" fill="#6b7280">Zwart snijdt</text>
+        </svg>`;
+        return qMc("lijnen","relations","Welke relatie past bij de blauwe lijnen?",["∥","⟂","×"],"∥", v);
+      }
+    ]
+  },
+
+  hoeken:{
+    "angle_type":[
+      ()=> {
+        const deg=45;
+        const v=svgAngle(deg);
+        return qMc("hoeken","angle_type","Welke soort hoek is dit?",["scherpe hoek","rechte hoek","stompe hoek"],"scherpe hoek", v);
+      },
+      ()=> {
+        const deg=90;
+        const v=svgAngle(deg);
+        return qMc("hoeken","angle_type","Welke soort hoek is dit?",["scherpe hoek","rechte hoek","stompe hoek"],"rechte hoek", v);
+      },
+      ()=> {
+        const deg=135;
+        const v=svgAngle(deg);
+        return qMc("hoeken","angle_type","Welke soort hoek is dit?",["scherpe hoek","rechte hoek","stompe hoek"],"stompe hoek", v);
+      }
+    ]
+  },
+
+  tijd:{
+    "clock_read":[
+      ()=> { const t={h:7,m:20}; const v=svgClock(t.h,t.m); return qInput("tijd","clock_read","Lees de klok: ____", `${String(t.h).padStart(2,"0")}:${String(t.m).padStart(2,"0")}`, "time", null, v, 0.0); },
+      ()=> { const t={h:14,m:35}; const v=svgClock(t.h,t.m); return qInput("tijd","clock_read","Lees de klok: ____", `${String(t.h).padStart(2,"0")}:${String(t.m).padStart(2,"0")}`, "time", null, v, 0.0); },
+      ()=> { const t={h:9,m:50}; const v=svgClock(t.h,t.m); return qInput("tijd","clock_read","Lees de klok: ____", `${String(t.h).padStart(2,"0")}:${String(t.m).padStart(2,"0")}`, "time", null, v, 0.0); }
+    ],
+    "time_convert":[
+      ()=> qInput("tijd","time_convert","Herleid: 2 uur = ____ minuten", 120, "number", "min"),
+      ()=> qInput("tijd","time_convert","Herleid: 90 minuten = ____ uur", 1.5, "number", "uur", null, 0.02),
+      ()=> qInput("tijd","time_convert","Herleid: 3,5 uur = ____ minuten", 210, "number", "min"),
+      ()=> qMc("tijd","time_convert","Kies de juiste eenheid: een les duurt 50 …",["sec","min","uur"],"min"),
+      ()=> qMc("tijd","time_convert","Kies de juiste eenheid: een film duurt 2 …",["sec","min","uur"],"uur")
+    ],
+    "time_add":[
+      ()=> {
+        const startH=19, startM=45;
+        const durH=2, durM=15;
+        const end = addTime(startH,startM,durH,durM);
+        const v=svgSimpleTable("Film",["Start","Duur"], [[`${String(startH).padStart(2,"0")}:${String(startM).padStart(2,"0")}`, `${durH}u ${durM}min`]]);
+        return qInput("tijd","time_add","Een film start om 19:45 en duurt 2u15.\nEinde om ____", `${end.h}:${end.m}`, "time", null, v, 0.0);
+      },
+      ()=> {
+        const startH=8, startM=10;
+        const durH=0, durM=35;
+        const end = addTime(startH,startM,durH,durM);
+        const v=svgSimpleTable("Busrit",["Vertrek","Duur"], [[`${String(startH).padStart(2,"0")}:${String(startM).padStart(2,"0")}`, `35 min`]]);
+        return qInput("tijd","time_add","Vertrek om 08:10 en reis 35 min.\nAankomst om ____", `${end.h}:${end.m}`, "time", null, v, 0.0);
+      }
+    ]
+  },
+
+  global:{
+    "mix":[
+      ()=> pickFromTopic("inhoud"),
+      ()=> pickFromTopic("grafieken"),
+      ()=> pickFromTopic("gemmid"),
+      ()=> pickFromTopic("massa"),
+      ()=> pickFromTopic("breuken"),
+      ()=> pickFromTopic("procent"),
+      ()=> pickFromTopic("lijnen"),
+      ()=> pickFromTopic("hoeken"),
+      ()=> pickFromTopic("tijd")
+    ]
+  }
+};
+
+function listSkills(topic){
+  return Object.keys(BANK[topic]||{}).filter(k=>k!=="mix");
+}
+function pickFromSkill(topic, skill){
+  const arr=(BANK[topic]||{})[skill]||[];
+  const gen=arr[Math.floor(Math.random()*arr.length)];
+  return gen ? gen() : null;
+}
+function pickFromTopic(topic){
+  // special 'global' topic: pick from BANK.global.mix if present
+  if(topic === "global"){
+    const mix = (BANK.global||{}).mix || [];
+    if(!mix || mix.length===0){ console.warn('pickFromTopic: BANK.global.mix empty'); return null; }
+    const gen = mix[Math.floor(Math.random()*mix.length)];
+    return gen ? gen() : null;
+  }
+  // adaptive: 60% weakest skill, 40% mix
+  const sks=listSkills(topic);
+  if(!sks.length) return null;
+
+  // compute weakest
+  let weakest=sks[0], best=999;
+  for(const sk of sks){
+    ensureSkill(topic, sk);
+    const s=skillScore(topic, sk);
+    if(s<best){best=s; weakest=sk;}
+  }
+  const chooseWeak = Math.random() < 0.60;
+  const targetSkill = chooseWeak ? weakest : sks[Math.floor(Math.random()*sks.length)];
+  const q = pickFromSkill(topic, targetSkill) || pickFromSkill(topic, weakest);
+  return q;
+}
+
+/* ---------- Diagnosis mapping (short, only on wrong) ---------- */
+
+/* ---------- Spaced retry (only for practice/run) ---------- */
+function cloneQuestion(q){
+  // shallow clone is enough (arrays copied)
+  return JSON.parse(JSON.stringify(q));
+}
+function scheduleRetry(q){
+  if(!q || state.mode==="test") return;
+  const attempt = (q._attempt || 0) + 1;
+  q._attempt = attempt;
+  const gap = attempt===1 ? 2 : attempt===2 ? 5 : 9;
+  const due = state.step + gap;
+  // keep queue small
+  const qq = cloneQuestion(q);
+  qq._retry = true;
+  state.retryQ.push({due, q: qq});
+  state.retryQ.sort((a,b)=>a.due-b.due);
+  if(state.retryQ.length>10) state.retryQ = state.retryQ.slice(-10);
+}
+function pullDueRetry(){
+  if(state.mode==="test") return null;
+  const i = state.retryQ.findIndex(x=>x.due<=state.step);
+  if(i>=0){
+    const item = state.retryQ.splice(i,1)[0];
+    return item.q;
+  }
+  return null;
+}
+
+function diagnose(topic, q, givenRaw){
+  // Keep it short: one line
+  try{
+    if(topic==="inhoud"){
+      if(q.kind==="input"){
+        const g=parseNumNL(givenRaw);
+        if(!Number.isFinite(g)) return "Gebruik een geldig getal (komma mag).";
+        const correct=Number(q.answer);
+        const ratio = correct ? (g/correct) : NaN;
+        // detect typical step mistakes
+        if(Math.abs(ratio-10)<1e-9) return "Je ging 1 stap te ver (×10).";
+        if(Math.abs(ratio-0.1)<1e-9) return "Je deed 1 stap te weinig (÷10).";
+        if(Math.abs(ratio-100)<1e-9) return "Je ging 2 stappen te ver (×100).";
+        if(Math.abs(ratio-0.01)<1e-9) return "Je deed 2 stappen te weinig (÷100).";
+        return ladderHintShort();
+      }
+      return "Kies de maat die logisch past bij het voorwerp.";
+    }
+
+    if(topic==="massa"){
+      if(q.skill==="convert" || q.skill==="context"){
+        const g=parseNumNL(givenRaw);
+        if(!Number.isFinite(g)) return "Gebruik een geldig getal (komma mag).";
+        return "Stapjes: mg→g→kg→ton (×1000 per stap).";
+      }
+      return "Kies de orde van grootte: vlieg is mg, brood is g, mens is kg, auto is ton.";
+    }
+
+    if(topic==="procent"){
+      if(q.skill==="percent_of") return "Neem p/100 en vermenigvuldig met het geheel.";
+      if(q.skill==="discount") return "Na korting: prijs × (1 − p/100).";
+      if(q.skill==="increase") return "Na stijging: prijs × (1 + p/100).";
+      if(q.skill==="complement") return "Samen is het 100%: vul aan tot 100.";
+      return "Zet % om naar een breuk op 100.";
+    }
+
+    if(topic==="gemmid"){
+      if(q.skill==="median") return "Mediaan = middelste(n) na sorteren.";
+      if(q.skill==="mean") return "Gemiddelde = som ÷ aantal.";
+      return "Sorteer of tel eerst rustig stap voor stap.";
+    }
+
+    if(topic==="grafieken"){
+      if(q.skill==="bar_read") return "Lees exact af met de hulplijnen op de as.";
+      if(q.skill==="bar_compare") return "Verschil = groter − kleiner (en kijk goed naar de schaal).";
+      if(q.skill==="pie_read") return "Gebruik de aantallen in de legenda om exact te rekenen.";
+      if(q.skill==="pie_truth") return "Vergelijk sectoren en hun aantallen in de legenda.";
+      return "Lees eerst de titel en assen; gebruik hulplijntjes.";
+    }
+
+    if(topic==="breuken"){
+      if(q.skill==="simplify") return "Deel teller en noemer door hun grootste gemeenschappelijke deler.";
+      if(q.skill==="fraction_of") return "‘van’ betekent vermenigvuldigen: breuk × getal.";
+      if(q.skill==="read_fraction") return "Breuk = ingekleurd ÷ totaal (vereenvoudig!).";
+      if(q.skill==="complement") return "Aanvullen tot 1 geheel: 1 − breuk.";
+      return "Schrijf je breuk netjes als teller/noemer.";
+    }
+
+    if(topic==="lijnen"){
+      return "∥ = evenwijdig, ⟂ = loodrecht, × = snijdend.";
+    }
+    if(topic==="hoeken"){
+      return "Scherp < 90°, recht = 90°, stomp tussen 90° en 180°.";
+    }
+    if(topic==="tijd"){
+      if(q.skill==="clock_read") return "Kijk eerst naar de kleine wijzer (uren), dan de grote (minuten).";
+      if(q.skill==="time_convert") return "1 uur = 60 min, 1 min = 60 sec.";
+      if(q.skill==="time_add") return "Zet om naar minuten, tel op, zet terug naar uren:minuten.";
+      return "Check altijd of je bij uren of minuten zit.";
+    }
+  }catch(e){}
+  return "Kijk nog eens naar de opgave en de eenheden.";
+}
+
+/* ---------- Answer parsing & checking ---------- */
+function parseFraction(s){
+  s=String(s??"").trim().replace(/\s+/g,"");
+  if(!s) return null;
+  const m = s.match(/^(-?\d+)\/(-?\d+)$/);
+  if(!m) return null;
+  const a=parseInt(m[1],10), b=parseInt(m[2],10);
+  if(!b) return null;
+  const g=gcd(a,b);
+  return {a:a/g, b:b/g};
+}
+function eqFraction(givenStr, correctStr){
+  const g=parseFraction(givenStr);
+  const c=parseFraction(correctStr);
+  if(!g||!c) return false;
+  return g.a===c.a && g.b===c.b;
+}
+function parseTime(s){
+  s=String(s??"").trim();
+  const m = s.match(/^(\d{1,2})\:(\d{2})$/);
+  if(!m) return null;
+  const hh=parseInt(m[1],10), mm=parseInt(m[2],10);
+  if(hh<0||hh>23||mm<0||mm>59) return null;
+  return {hh,mm, norm: String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")};
+}
+
+/* ---------- State & navigation ---------- */
+const state={
+  screen:"scrStart",
+  topic:null,           // chosen topic
+  mode:null,            // 'practice' | 'run' | 'test'
+  locked:false,
+  inFlight:false,       // extra protection for async
+  timer:null,
+  tStart:0,
+  timeLimitMs:0,
+  deadline:0,
+
+  qTotal:0,             // for test
+  qIndex:0,             // for test
+  ok:0, bad:0,
+  wrongTypes:{},        // skill -> count
+  step:0,               // question counter (non-test)
+  retryQ:[],            // spaced retries: {due:number, q:object}
+  selected:null,
+  current:null,
+};
+
+function setScreen(id){
+  state.screen=id;
+  $$(".screen").forEach(s=>s.classList.remove("active"));
+  $("#"+id).classList.add("active");
+  closeDrawer();
+  $("#pillMode").style.display = (id==="scrGame") ? "inline-flex" : "none";
+}
+function setModePill(text){
+  const el=$("#pillMode");
+  el.textContent=text||"";
+}
+function setStatus(msg, kind){
+  const el=$("#status");
+  el.textContent=msg||"";
+  el.className="status";
+  if(kind==="ok") el.classList.add("ok");
+  if(kind==="err") el.classList.add("err");
+  if(kind==="warn") el.classList.add("warn");
+}
+function lockUI(on){
+  state.locked=on;
+  // disable all relevant inputs/buttons
+  const dis = !!on;
+  $("#btnOkInline").disabled = dis;
+  $("#btnOkMc").disabled = dis;
+  $("#mainInput").disabled = dis;
+  $$("#choices .choice").forEach(c=> c.style.pointerEvents = dis ? "none" : "auto");
+  $$("#keypad .key").forEach(k=> k.disabled = dis);
+}
+function resetSession(){
+  state.locked=false;
+  state.inFlight=false;
+  state.step=0;
+  state.retryQ=[];
+  state.timer && clearInterval(state.timer);
+  state.timer=null;
+  state.tStart=0;
+  state.deadline=0;
+  state.timeLimitMs=0;
+  state.qTotal=0;
+  state.qIndex=0;
+  state.ok=0;
+  state.bad=0;
+  state.wrongTypes={};
+  state.selected=null;
+  state.current=null;
+  setStatus("");
+}
+
+/* ---------- Render map & badges ---------- */
+let overallRanksCache = null; // {name->rank} or just top3 set
+async function refreshOverallTop3(){
+  // try online else local
+  const day=todayKey();
+  let rows=[];
+  if(sbEnabled()){
+    try{ rows = await sbFetchOverall(); }
+    catch(e){ rows=[]; }
+  }
+  if(!rows.length){
+    rows = (localBoard||[]).filter(x=>x.day===day && x.mode==="global")
+      .sort((a,b)=> b.score-a.score || b.acc-a.acc || a.at-b.at)
+      .slice(0,20);
+  }
+  const top3=rows.slice(0,3).map(r=>({name:r.name, class:r.class}));
+  // determine current user rank if present
+  let rank=0;
+  for(let i=0;i<rows.length;i++){
+    if(norm(rows[i].name)===norm(profile.name) && norm(rows[i].class)===norm(profile.class)){ rank=i+1; break; }
+  }
+  overallRanksCache = {top3, rank};
+  renderMap(); // update cups
+}
+
+function renderMap(){
+  const host=$("#mapGrid");
+  host.innerHTML="";
+  const myOverallRank = overallRanksCache?.rank || 0;
+
+  TOPICS.forEach(t=>{
+    const tile=document.createElement("div");
+    tile.className="tile";
+    tile.dataset.topic=t.id;
+
+    const badges=document.createElement("div");
+    badges.className="badgeRow";
+
+    // medals per topic (personal)
+    if(t.id!=="global"){
+      const m = prog.medals[t.id] || "";
+      if(m){
+        const b=document.createElement("div");
+        b.className="medal";
+        b.textContent = medalEmoji(m);
+        badges.appendChild(b);
+      }
+    }
+
+    // cups from overall rank on every tile (as requested earlier)
+    if(myOverallRank>=1 && myOverallRank<=3){
+      const b=document.createElement("div");
+      b.className="cup";
+      b.textContent = cupEmoji(myOverallRank);
+      badges.appendChild(b);
+    }
+
+    tile.appendChild(badges);
+
+    const top=document.createElement("div");
+    top.className="tileTop";
+    top.innerHTML = t.icon;
+    tile.appendChild(top);
+
+    const title=document.createElement("div");
+    title.className="tileTitle";
+    title.textContent = t.title;
+    tile.appendChild(title);
+
+    tile.onclick=()=>{
+      if(t.id==="global"){
+        openTopicModal({id:"global", title:"Quest Run"});
+      } else {
+        openTopicModal(t);
+      }
+    };
+
+    host.appendChild(tile);
+  });
+}
+
+/* ---------- Topic modal ---------- */
+let modalTopic=null;
+function openTopicModal(t){
+  modalTopic=t;
+  $("#topicModalTitle").textContent = t.title;
+  // badges line
+  const m = (t.id!=="global") ? (prog.medals[t.id]||"") : "";
+  const mTxt = m ? `Medaille: ${medalEmoji(m)} (${m})` : "Nog geen medaille.";
+  $("#topicModalBadges").textContent = (t.id==="global") ? "Quest Run telt voor overall ranglijst." : mTxt;
+  $("#topicModalBack").classList.add("open");
+}
+function closeTopicModal(){
+  $("#topicModalBack").classList.remove("open");
+}
+
+/* ---------- Question rendering ---------- */
+function showKeypad(show, hint=""){
+  $("#rightPanel").style.display = show ? "grid" : "none";
+  $("#rpHint").textContent = hint||"";
+  const oneCol = !show;
+  $("#gameGrid").classList.toggle("oneCol", oneCol);
+}
+
+function renderQuestion(q){
+  state.current=q;
+  state.selected=null;
+  setStatus("");
+  lockUI(false);
+
+  // header crumbs
+  const topicLabel = q.topic==="global" ? "Quest Run" : TOPICS.find(x=>x.id===q.topic)?.title || q.topic;
+  $("#crumbTop").textContent = topicLabel;
+  $("#headTitle").textContent =
+    state.mode==="practice" ? "Oefenen" :
+    state.mode==="run" ? "Run (5 min)" :
+    "Toets";
+  setModePill(`${topicLabel} • ${$("#headTitle").textContent}`);
+
+  // prompt in body (centered)
+  $("#qPrompt").textContent = q.prompt;
+  $("#qSub").style.display = q.sub ? "block" : "none";
+  $("#qSub").textContent = q.sub || "";
+
+  // visual
+  const vw=$("#visualWrap");
+  if(q.visualHtml){
+    vw.style.display="grid";
+    vw.innerHTML = q.visualHtml;
+  }else{
+    vw.style.display="none";
+    vw.innerHTML="";
+  }
+
+  // answer UI
+  $("#choices").innerHTML="";
+  $("#inputRow").style.display="none";
+  $("#mcRow").style.display="none";
+  $("#unitChip").style.display="none";
+
+  if(q.kind==="mc"){
+    q.options.forEach(opt=>{
+      const b=document.createElement("div");
+      b.className="choice";
+      b.textContent=opt;
+      b.onclick=()=>{
+        if(state.locked) return;
+        $$("#choices .choice").forEach(x=>x.classList.remove("sel"));
+        b.classList.add("sel");
+        state.selected=opt;
+        $("#btnOkMc").disabled=false;
+        if(profile.settings.autoOk) submitAnswer();
+      };
+      $("#choices").appendChild(b);
+    });
+    $("#mcRow").style.display="flex";
+    $("#btnOkMc").disabled=true;
+    showKeypad(false);
+    return;
+  }
+
+  if(q.kind==="input"){
+    $("#inputRow").style.display="flex";
+    $("#mainInput").value="";
+    $("#mainInput").placeholder = (q.inputKind==="fraction") ? "bv. 3/4" : (q.inputKind==="time") ? "bv. 09:15" : "antwoord";
+    $("#btnOkInline").disabled=true;
+    if(q.unit){
+      $("#unitChip").style.display="inline-flex";
+      $("#unitChip").textContent=q.unit;
+    }
+    $("#mainInput").oninput=()=>{
+      if(state.locked) return;
+      const v=$("#mainInput").value.trim();
+      $("#btnOkInline").disabled = v.length===0;
+      if(profile.settings.autoOk && v.length>0) {
+        // small debounce to avoid auto spam (use state so it's not global)
+        if(state.autoOkTimer) clearTimeout(state.autoOkTimer);
+        state.autoOkTimer = setTimeout(()=>{ if(!state.locked) submitAnswer(); }, 250);
+      }
+    };
+    $("#mainInput").focus();
+
+    const kpHint = (q.inputKind==="fraction") ? "Gebruik /" : (q.inputKind==="time") ? ":" : ",";
+    showKeypad(true, kpHint);
+    return;
+  }
+}
+
+/* ---------- Central submitAnswer() with lock ---------- */
+function submitAnswer(){
+  if(state.locked || state.inFlight) return;
+  const q=state.current; if(!q) return;
+
+  state.inFlight=true;
+  lockUI(true);
+
+  try{
+    let ok=false;
+  let givenRaw = "";
+  let correctTxt = "";
+
+  if(q.kind==="mc"){
+    givenRaw = state.selected ?? "";
+    ok = norm(givenRaw) === norm(q.answer);
+    correctTxt = String(q.answer);
+  } else {
+    givenRaw = $("#mainInput").value.trim();
+    if(q.inputKind==="fraction"){
+      ok = eqFraction(givenRaw, q.answer);
+      correctTxt = q.answer;
+    } else if(q.inputKind==="time"){
+      const g=parseTime(givenRaw);
+      const c=parseTime(q.answer);
+      ok = !!(g && c && g.norm===c.norm);
+      correctTxt = q.answer;
+    } else {
+      const g=parseNumNL(givenRaw);
+      const c=Number(q.answer);
+      ok = Number.isFinite(g) && Math.abs(g-c) <= (q.tol ?? 0.01);
+      correctTxt = formatNL(c);
+    }
+  }
+
+  // feedback (only show explanation on wrong)
+  if(ok){
+    state.ok++;
+    setStatus("✅ Juist", "ok");
+  } else {
+    state.bad++;
+    scheduleRetry(q);
+    const diag = diagnose(q.topic, q, givenRaw);
+    setStatus(`❌ Juist was: ${correctTxt}. ${diag}`, "err");
+    // wrong types for test summary
+    if(state.mode==="test") state.wrongTypes[q.skill] = (state.wrongTypes[q.skill]||0) + 1;
+  }
+
+  // skill update (note: topic 'global' routes to underlying topic skill? We'll update by q.topic as-is)
+  updateSkills(q.topic, [q.skill], ok);
+
+  // progress index
+  if(state.mode==="test"){
+    state.qIndex++;
+  }
+
+  // unlock and go next
+  const delay = ok ? 450 : 900;
+  window.setTimeout(()=>{
+    // timer might have ended; if so, don't push next question
+    if(state.mode==="run" && state.deadline && Date.now()>=state.deadline){
+      finishRun();
+      return;
+    }
+    if(state.mode==="test" && state.qIndex>=state.qTotal){
+      finishTest();
+      return;
+    }
+    nextQuestion();
+  }, delay);
+  }catch(err){
+    console.error(err);
+    state.inFlight=false;
+    lockUI(false);
+    setStatus("⚠️ Er ging iets mis. Probeer opnieuw.", "warn");
+  }
+}
+
+/* ---------- Next question selection ---------- */
+function nextQuestion(){
+  // release UI lock
+  lockUI(false);
+  state.inFlight=false;
+  setStatus("");
+
+  if(state.mode!=="test") state.step = (state.step||0) + 1;
+
+  let q = pullDueRetry();
+  if(!q) {
+
+  if(state.mode==="run" && state.topic==="global"){
+    // pick a random topic via bank global mix
+    const gen = BANK.global.mix[Math.floor(Math.random()*BANK.global.mix.length)];
+    q = gen();
+  } else {
+    q = pickFromTopic(state.topic);
+  }
+  }
+
+  // Fallback if something is missing
+  if(!q){
+    q = qMc(state.topic||"inhoud", "fallback", "Fallback: 1 l = ?", ["10 ml","100 ml","1000 ml","10 000 ml"], "1000 ml");
+  }
+
+  // ensure fields exist
+  q.topic = q.topic || state.topic;
+  renderQuestion(q);
+}
+
+/* ---------- Timer handling ---------- */
+function startRunTimer(ms){
+  $("#pillTimer").style.display="inline-flex";
+  state.timeLimitMs=ms;
+  state.tStart=Date.now();
+  state.deadline=state.tStart + ms;
+  $("#pillTimer").textContent = "⏱ "+msToClock(ms);
+
+  if(state.timer) clearInterval(state.timer);
+  state.timer=setInterval(()=>{
+    const rem = state.deadline - Date.now();
+    $("#pillTimer").textContent = "⏱ "+msToClock(rem);
+    if(rem<=0){
+      clearInterval(state.timer);
+      state.timer=null;
+      finishRun();
+    }
+  }, 200);
+}
+function stopTimer(){
+  if(state.timer) clearInterval(state.timer);
+  state.timer=null;
+  $("#pillTimer").style.display="none";
+}
+
+/* ---------- Finish flows ---------- */
+function accuracyPct(){
+  const a=state.ok+state.bad;
+  return a? Math.round((state.ok/a)*100) : 0;
+}
+function addLocalBoardRow(row){
+  localBoard.push({...row, at:Date.now()});
+  localBoard = localBoard.slice(-200);
+  saveLocalBoard();
+}
+
+async function finishRun(){
+  lockUI(true);
+  stopTimer();
+  const acc=accuracyPct();
+  const day=todayKey();
+
+  // medal update only for runs (not for test)
+  if(state.topic!=="global"){
+    const m = medalForScore(state.ok);
+    if(m){
+      const cur = prog.medals[state.topic] || "";
+      const rank = {bronze:1,silver:2,gold:3};
+      if(!cur || rank[m]>rank[cur]){
+        prog.medals[state.topic]=m;
+      }
+    }
+    saveProg();
+  }
+
+  // build row for leaderboard
+  // build row for leaderboard
+  const duration_ms = Math.max(0, Date.now() - (state.tStart||Date.now()));
+  const isGlobal = (state.topic==="global");
+  const row = {
+    day,
+    mode: isGlobal ? "global" : "topic",
+    topic: isGlobal ? "global" : state.topic,
+    name: profile.name,
+    class: profile.class,
+    score: state.ok,
+    acc,
+    duration_ms
+  };
+
+  // local fallback always
+  addLocalBoardRow(row);
+
+  // post online (if enabled)
+  if(sbEnabled()){
+    try{
+      if(canPostNow()){
+        await sbPostScore(row);
+      }
+    }catch(e){
+      // ignore, still have local
+    }
+  }
+
+  // show result screen (quick)
+  $("#resTitle").textContent = "Run klaar";
+  $("#resLine").textContent = `Score: ${state.ok} • Fout: ${state.bad} • Accuraat: ${acc}%`;
+  const wrongList = Object.entries(state.wrongTypes).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  $("#resWrong").innerHTML = wrongList.length ? wrongList.map(([k,v])=>`• ${k} (${v})`).join("<br>") : "Geen fouttypes geregistreerd.";
+  setScreen("scrResult");
+
+  // update map cups/medals
+  await refreshOverallTop3();
+}
+
+function finishTest(){
+  lockUI(true);
+  stopTimer();
+  const acc=accuracyPct();
+
+  $("#resTitle").textContent = "Toets klaar";
+  $("#resLine").textContent = `Score: ${state.ok}/${state.qTotal} • Fout: ${state.bad} • Accuraat: ${acc}%`;
+
+  const wrongList = Object.entries(state.wrongTypes).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  $("#resWrong").innerHTML = wrongList.length ? wrongList.map(([k,v])=>`• ${k} (${v})`).join("<br>") : "Geen fouttypes.";
+
+  setScreen("scrResult");
+}
+
+/* ---------- Start sessions ---------- */
+function startPractice(topic){
+  if(!hasIdentity()) { toast("Log eerst in."); showScreen("scrStart"); return; }
+
+  resetSession();
+  state.topic=topic;
+  state.mode="practice";
+  $("#btnStop").textContent="Terug";
+  setScreen("scrGame");
+  setModePill(`${TOPICS.find(x=>x.id===topic)?.title||topic} • Oefenen`);
+  stopTimer();
+  nextQuestion();
+}
+function startRun(topic){
+  if(!hasIdentity()) { toast("Log eerst in."); showScreen("scrStart"); return; }
+
+  resetSession();
+  state.topic=topic;
+  state.mode="run";
+  $("#btnStop").textContent="Stop";
+  setScreen("scrGame");
+  setModePill(`${TOPICS.find(x=>x.id===topic)?.title||topic} • Run`);
+  startRunTimer(5*60*1000);
+  nextQuestion();
+}
+let testSetup={count:20, time:0};
+function startTestSetup(topic){
+  if(!hasIdentity()) { toast("Log eerst in."); showScreen("scrStart"); return; }
+
+  state.topic=topic;
+  // show setup screen
+  setScreen("scrTestSetup");
+}
+function startTest(){
+  if(!hasIdentity()) { toast("Log eerst in."); showScreen("scrStart"); return; }
+
+  resetSession();
+  state.mode="test";
+  state.qTotal=testSetup.count;
+  state.qIndex=0;
+  $("#btnStop").textContent="Stop";
+  setScreen("scrGame");
+  setModePill(`${TOPICS.find(x=>x.id===state.topic)?.title||state.topic} • Toets`);
+  if(testSetup.time>0){
+    startRunTimer(testSetup.time*1000); // seconds already? we store seconds? We'll store seconds in dataset; convert to ms below.
+  }else{
+    stopTimer();
+  }
+  // fix: in setup we store seconds; convert properly
+}
+function startTestWithSettings(){
+  if(!hasIdentity()) { toast("Log eerst in."); showScreen("scrStart"); return; }
+
+  resetSession();
+  state.mode="test";
+  state.qTotal=testSetup.count;
+  state.qIndex=0;
+  $("#btnStop").textContent="Stop";
+  setScreen("scrGame");
+  setModePill(`${TOPICS.find(x=>x.id===state.topic)?.title||state.topic} • Toets`);
+  if(testSetup.time>0){
+    startRunTimer(testSetup.time*1000);
+  }else{
+    stopTimer();
+  }
+  nextQuestion();
+}
+
+/* ---------- Leaderboard screen ---------- */
+function renderBoardRows(tbody, rows, withTopic=false){
+  tbody.innerHTML="";
+  rows.forEach((r, i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = withTopic
+      ? `<td>${i+1}</td><td>${r.name}</td><td>${r.class}</td><td>${r.topic}</td><td>${r.score}</td><td>${r.acc}%</td>`
+      : `<td>${i+1}</td><td>${r.name}</td><td>${r.class}</td><td>${r.score}</td><td>${r.acc}%</td>`;
+    tbody.appendChild(tr);
+  });
+}
+async function loadBoards(){
+  const day=todayKey();
+
+  // Overall
+  let overall=[];
+  if(sbEnabled()){
+    try{ overall = await sbFetchOverall(); }
+    catch(e){ overall=[]; }
+  }
+  if(!overall.length){
+    overall = (localBoard||[]).filter(x=>x.day===day && x.mode==="global")
+      .sort((a,b)=> b.score-a.score || b.acc-a.acc || a.at-b.at)
+      .slice(0,20);
+  }
+  renderBoardRows($("#boardOverall"), overall, false);
+
+  // Topic
+  const topicSel = $("#boardTopicSel").value || "inhoud";
+  let topicRows=[];
+  if(sbEnabled()){
+    try{ topicRows = await sbFetchTopic(topicSel); }
+    catch(e){ topicRows=[]; }
+  }
+  if(!topicRows.length){
+    topicRows = (localBoard||[]).filter(x=>x.day===day && x.mode==="topic" && x.topic===topicSel)
+      .sort((a,b)=> b.score-a.score || b.acc-a.acc || a.at-b.at)
+      .slice(0,20);
+  }
+  renderBoardRows($("#boardTopic"), topicRows, true);
+
+  // note
+  $("#boardNote").textContent = sbEnabled()
+    ? "Live scoreboard via Supabase (fallback: lokaal bij verbindingsproblemen)."
+    : "Lokaal leaderboard (per toestel).";
+}
+
+/* ---------- Drawer ---------- */
+function openDrawer(){ $("#drawer").classList.add("open"); }
+function closeDrawer(){ $("#drawer").classList.remove("open"); }
+
+/* ---------- Events ---------- */
+$("#btnMenu").onclick=openDrawer;
+$("#btnCloseDrawer").onclick=closeDrawer;
+$("#drawer").onclick=(e)=>{ if(e.target.id==="drawer") closeDrawer(); };
+
+$$(".drawer .item").forEach(it=>{
+  it.onclick=async ()=>{
+    const nav=it.dataset.nav;
+    if(nav==="start"){ setScreen("scrStart"); }
+    if(nav==="map"){ if(hasIdentity()){ setScreen("scrMap"); } else setScreen("scrStart"); }
+    if(nav==="settings"){ renderSettings(); setScreen("scrSettings"); }
+    if(nav==="board"){ await loadBoards(); setScreen("scrBoard"); }
+  };
+});
+
+$("#btnOpenBoard").onclick=async ()=>{ await loadBoards(); setScreen("scrBoard"); };
+
+$("#btnRefreshBoard").onclick=async ()=>{ await loadBoards(); await refreshOverallTop3(); };
+$("#btnBackFromBoard").onclick=()=>{ setScreen("scrMap"); };
+
+
+// ---------- Auth UI ----------
+function setAuthMsg(msg, isErr=false){
+  const el=$("#authMsg");
+  el.textContent = msg || "";
+  el.style.color = isErr ? "var(--bad)" : "var(--mut)";
+}
+
+function setAuthTab(which){
+  const isLogin = (which==="login");
+  $("#paneLogin").hidden = !isLogin;
+  $("#paneSignup").hidden = isLogin;
+  $("#tabLogin").classList.toggle("on", isLogin);
+  $("#tabSignup").classList.toggle("on", !isLogin);
+  if(isLogin){
+    $("#loginUser").focus();
+  }else{
+    $("#signupUser").focus();
+  }
+}
+
+$("#tabLogin").onclick=()=>{ setAuthTab("login"); setAuthMsg(""); };
+$("#tabSignup").onclick=()=>{ setAuthTab("signup"); setAuthMsg(""); };
+
+$("#btnStartLeader").onclick=()=>{ showScreen("scrBoard"); refreshAllLB(); };
+$("#btnStartSettings").onclick=()=>{ renderSettings(); showScreen("scrSettings"); };
+
+function setAuthBusy(busy){
+  ["btnLogin","btnSignup","tabLogin","tabSignup"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled=!!busy;
+  });
+}
+
+async function handleLogin(){
+  const user=$("#loginUser").value;
+  const pass=$("#loginPass").value;
+  const {username, email} = usernameToEmail(user);
+  if(!username){ setAuthMsg("Kies een geldige gebruikersnaam (letters/cijfers).", true); return; }
+  if(!pass || pass.length<6){ setAuthMsg("Wachtwoord moet minstens 6 tekens zijn.", true); return; }
+
+  setAuthBusy(true);
+  setAuthMsg("Inloggen…");
+  try{
+    profile.username = username;
+    saveProfile();
+    const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
+    if(error) throw error;
+
+    authUser = data.user;
+    const row = await ensureProfileRow({username});
+    applyRemoteProfile(row);
+    renderSettings();
+    showScreen("scrMap");
+    toast("Welkom terug!");
+    refreshAllLB();
+  }catch(err){
+    setAuthMsg(String(err?.message||err), true);
+  }finally{
+    setAuthBusy(false);
+  }
+}
+
+async function handleSignup(){
+  const user=$("#signupUser").value;
+  const pass=$("#signupPass").value;
+  const nm=$("#signupName").value;
+  const cl=$("#signupClass").value;
+  const {username, email} = usernameToEmail(user);
+
+  if(!username){ setAuthMsg("Kies een geldige gebruikersnaam (letters/cijfers).", true); return; }
+  if(!pass || pass.length<6){ setAuthMsg("Wachtwoord moet minstens 6 tekens zijn.", true); return; }
+  if(!nm.trim()){ setAuthMsg("Vul je naam in (voor het scoreboard).", true); return; }
+  if(!cl.trim()){ setAuthMsg("Vul je klas in (bv. 1B).", true); return; }
+
+  setAuthBusy(true);
+  setAuthMsg("Account maken…");
+  try{
+    profile.username = username;
+    profile.name = nm.trim();
+    profile.class = cl.trim();
+    saveProfile();
+
+    const {data, error} = await sb.auth.signUp({email, password: pass});
+    if(error) throw error;
+
+    authUser = data.user;
+
+    // Maak/registreer profiel + init voortgang
+    await ensureProfileRow({username, name: profile.name, class: profile.class});
+    await upsertProfileRemote();
+
+    renderSettings();
+    showScreen("scrMap");
+    toast("Account klaar!");
+    refreshAllLB();
+  }catch(err){
+    setAuthMsg(String(err?.message||err), true);
+  }finally{
+    setAuthBusy(false);
+  }
+}
+
+$("#btnLogin").onclick=handleLogin;
+$("#btnSignup").onclick=handleSignup;
+
+// Settings events
+
+$("#togAutoOk").onclick=()=>{
+  profile.settings.autoOk = !profile.settings.autoOk;
+  $("#autoOkState").textContent = profile.settings.autoOk ? "on" : "off";
+  saveProfile();
+  queueRemoteSave();
+};
+
+$("#togSound").onclick=()=>{
+  profile.settings.sound = !profile.settings.sound;
+  $("#soundState").textContent = profile.settings.sound ? "on" : "off";
+  saveProfile();
+  queueRemoteSave();
+};
+
+$("#btnCloseSettings").onclick=()=>{ showScreen(hasIdentity() ? "scrMap" : "scrStart"); };
+$("#btnLogout").onclick=async ()=>{
+  try{
+    await sb.auth.signOut();
+  }catch(e){}
+  authUser=null;
+  updateUserPill();
+  $("#settingsUser").textContent="Niet ingelogd";
+  toast("Uitgelogd");
+  showScreen("scrStart");
+};
+
+
+
+async function initAuth(){
+  try{
+    const {data} = await sb.auth.getSession();
+    const sess = data?.session;
+    if(sess?.user){
+      authUser = sess.user;
+      // laad profiel/voortgang
+      const row = await ensureProfileRow({username: profile.username});
+      applyRemoteProfile(row);
+
+      $("#settingsUser").textContent = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
+      $("#autoOkState").textContent = profile.settings.autoOk ? "on" : "off";
+      $("#soundState").textContent = profile.settings.sound ? "on" : "off";
+
+      renderSettings();
+      showScreen("scrMap");
+      refreshAllLB();
+      return;
+    }
+  }catch(err){
+    console.warn("initAuth:", err?.message||err);
+  }
+  authUser = null;
+  updateUserPill();
+  $("#settingsUser").textContent = "Niet ingelogd";
+  showScreen("scrStart");
+}
+
+sb.auth.onAuthStateChange(async (event, session)=>{
+  if(session?.user){
+    authUser = session.user;
+    try{
+      const row = await ensureProfileRow({username: profile.username});
+      applyRemoteProfile(row);
+      renderSettings();
+      showScreen("scrMap");
+      refreshAllLB();
+    }catch(err){
+      console.warn("auth change:", err?.message||err);
+    }
+  }else{
+    authUser = null;
+    updateUserPill();
+    renderSettings();
+    showScreen("scrStart");
+  }
+});
+
+
+(function boot(){
+  // Auth screen default
+  setAuthTab("login");
+  $("#loginUser").value = profile.username || "";
+  $("#signupUser").value = profile.username || "";
+
+  // Settings toggles
+  $("#autoOkState").textContent = profile.settings.autoOk ? "on" : "off";
+  $("#soundState").textContent = profile.settings.sound ? "on" : "off";
+  $("#settingsUser").textContent = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
+
+  // Board dropdown
+  populateBoardTopicSel();
+
+  // Start auth flow
+  initAuth();
+})();
+</script>
+</body>
+</html>
