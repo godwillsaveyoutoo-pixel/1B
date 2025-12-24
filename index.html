@@ -2248,6 +2248,8 @@ function setScreen(id){
   closeDrawer();
   $("#pillMode").style.display = (id==="scrGame") ? "inline-flex" : "none";
 }
+// Backwards-compatible alias used in older code
+function showScreen(id){ setScreen(id); }
 function setModePill(text){
   const el=$("#pillMode");
   el.textContent=text||"";
@@ -2774,6 +2776,14 @@ function renderBoardRows(tbody, rows, withTopic=false){
       : `<td>${i+1}</td><td>${r.name}</td><td>${r.class}</td><td>${r.score}</td><td>${r.acc}%</td>`;
     tbody.appendChild(tr);
   });
+}
+function populateBoardTopicSel(){
+  const sel = $("#boardTopicSel");
+  if(!sel) return;
+  sel.innerHTML = TOPICS.map(t=>`<option value="${t.id}">${t.title}</option>`).join("");
+  // keep previous selection if any, otherwise default
+  sel.value = sel.value || "inhoud";
+  sel.onchange = ()=>{ loadBoards().catch(err=>console.warn('loadBoards error',err)); };
 }
 async function loadBoards(){
   const day=todayKey();
