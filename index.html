@@ -2259,12 +2259,18 @@ const state={
 };
 
 function setScreen(id){
+  const el = document.getElementById(id);
+  if(!el){
+    console.warn("Unknown screen:", id);
+    return;
+  }
   state.screen=id;
   $$(".screen").forEach(s=>s.classList.remove("active"));
-  $("#"+id).classList.add("active");
+  el.classList.add("active");
   closeDrawer();
   $("#pillMode").style.display = (id==="scrGame") ? "inline-flex" : "none";
 }
+
 // Backwards-compatible alias used in older code
 function showScreen(id){ setScreen(id); }
 function setModePill(text){
