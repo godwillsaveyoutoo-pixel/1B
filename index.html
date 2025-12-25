@@ -2886,7 +2886,18 @@ function setAuthTab(which){
 $("#tabLogin").onclick=()=>{ setAuthTab("login"); setAuthMsg(""); };
 $("#tabSignup").onclick=()=>{ setAuthTab("signup"); setAuthMsg(""); };
 
-$("#btnStartLeader").onclick=()=>{ showScreen("scrBoard"); refreshAllLB(); };
+$("#btnStartLeader").onclick = async ()=>{
+  try{
+    populateBoardTopicSel();
+    await loadBoards();
+    showScreen("scrBoard");
+  }catch(e){
+    console.warn(e);
+    setAuthMsg("Kon ranglijst niet laden (offline?).", true);
+    showScreen("scrBoard"); // toon alsnog
+  }
+};
+
 $("#btnStartSettings").onclick=()=>{ renderSettings(); showScreen("scrSettings"); };
 
 function setAuthBusy(busy){
@@ -2895,11 +2906,11 @@ function setAuthBusy(busy){
     if(el) el.disabled=!!busy;
   });
 }
-
 async function handleLogin(){
   const user=$("#loginUser").value;
   const pass=$("#loginPass").value;
   const {username, email} = usernameToEmail(user);
+
   if(!username){ setAuthMsg("Kies een geldige gebruikersnaam (letters/cijfers).", true); return; }
   if(!pass || pass.length<6){ setAuthMsg("Wachtwoord moet minstens 6 tekens zijn.", true); return; }
 
@@ -2908,22 +2919,19 @@ async function handleLogin(){
   try{
     profile.username = username;
     saveProfile();
-    const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
+
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     if(error) throw error;
 
-    authUser = data.user;
-    const row = await ensureProfileRow({username});
-    applyRemoteProfile(row);
-    renderSettings();
-    showScreen("scrMap");
-    toast("Welkom terug!");
-    refreshAllLB();
+    // NIET meer: ensureProfileRow/applyRemoteProfile/showScreen hier
+    // Dat doet onAuthStateChange voor ons.
   }catch(err){
     setAuthMsg(String(err?.message||err), true);
   }finally{
     setAuthBusy(false);
   }
 }
+
 
 async function handleSignup(){
   const user=$("#signupUser").value;
@@ -3027,24 +3035,33 @@ async function initAuth(){
 }
 
 sb.auth.onAuthStateChange(async (event, session)=>{
-  if(session?.user){
-    authUser = session.user;
-    try{
+  try{
+    if(session?.user){
+      authUser = session.user;
+
+      setAuthMsg("Profiel laden…");
       const row = await ensureProfileRow({username: profile.username});
       applyRemoteProfile(row);
+
       renderSettings();
       showScreen("scrMap");
-      refreshAllLB();
-    }catch(err){
-      console.warn("auth change:", err?.message||err);
+
+      setAuthMsg("");
+      await refreshAllLB();
+    }else{
+      authUser = null;
+      updateUserPill();
+      renderSettings();
+      showScreen("scrStart");
     }
-  }else{
-    authUser = null;
-    updateUserPill();
-    renderSettings();
+  }catch(err){
+    console.error("auth change error:", err);
+    setAuthMsg("Inloggen gelukt, maar profiel laden faalde: " + (err?.message||err), true);
+    // Dit is belangrijk: je ziet dan meteen wat er misloopt
     showScreen("scrStart");
   }
 });
+
 
 
 (function boot(){
