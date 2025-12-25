@@ -749,6 +749,17 @@
           <div class="card">
             <h2>Settings</h2>
             <div class="sub" id="settingsUser">Niet ingelogd</div>
+<div class="tiny" style="margin-top:12px">Naam (scoreboard)</div>
+<input id="setName" class="input" placeholder="bv. Adam">
+
+<div class="tiny" style="margin-top:10px">Klas</div>
+<input id="setClass" class="input" placeholder="bv. 1B">
+
+<div class="row" style="margin-top:12px">
+  <button class="btn primary" id="btnSaveIdentity">Opslaan</button>
+</div>
+
+<div class="tiny" id="identityHint" style="margin-top:10px;color:var(--mut)"></div>
 
             <div class="stack" style="margin-top:10px">
               <button class="btn" id="togAutoOk" title="Automatisch antwoorden indienen in Test-modus">Auto submit: <span id="autoOkState">off</span></button>
@@ -1005,10 +1016,21 @@ function saveProfile(){
 function hasIdentity(){
   return !!authUser && (profile.name||"").trim() && (profile.class||"").trim();
 }
-
-function updateUserPill(){
-  $("#pillUser").textContent = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
+function isAuthed(){
+  return !!authUser;
 }
+function updateUserPill(){
+  if(!authUser){
+    $("#pillUser").textContent = "Niet ingelogd";
+    return;
+  }
+  if((profile.name||"").trim() && (profile.class||"").trim()){
+    $("#pillUser").textContent = `${profile.name} • ${profile.class}`;
+  }else{
+    $("#pillUser").textContent = "Ingelogd • profiel onvolledig";
+  }
+}
+
 updateUserPill();
 
 
@@ -1029,6 +1051,36 @@ function usernameToEmail(username){
   const u = cleanUsername(username);
   return { username:u, email: u ? `${u}@wiskundequest.example` : "" };
 }
+function openIdentityFix(msg="Vul je naam + klas in om te spelen en op het scoreboard te komen."){
+  renderSettings();
+  $("#setName").value = profile.name || "";
+  $("#setClass").value = profile.class || "";
+  $("#identityHint").textContent = msg;
+  showScreen("scrSettings");
+}
+
+$("#btnSaveIdentity").onclick = async ()=>{
+  profile.name  = ($("#setName").value||"").trim();
+  profile.class = ($("#setClass").value||"").trim();
+
+  if(!profile.name || !profile.class){
+    $("#identityHint").textContent = "Naam én klas zijn verplicht.";
+    return;
+  }
+
+  saveProfile();
+  updateUserPill();
+  renderSettings();
+
+  try{
+    await upsertProfileRemote(); // schrijft name/class naar profiles
+  }catch(e){
+    // zelfs als dit faalt: lokaal kan je al door
+    console.warn(e);
+  }
+
+  showScreen("scrMap");
+};
 
 /* ---------- Topics & visuals (simple, truthful icons) ---------- */
 const TOPICS=[
@@ -2890,36 +2942,54 @@ function setAuthBusy(busy){
 }
 
 async function handleLogin(){
-  const user=$("#loginUser").value;
-  const pass=$("#loginPass").value;
-  const {username, email} = usernameToEmail(user);
+  const user = $("#loginUser").value;
+  const pass = $("#loginPass").value;
+  const { username, email } = usernameToEmail(user);
+
   if(!username){ setAuthMsg("Kies een geldige gebruikersnaam (letters/cijfers).", true); return; }
-  if(!pass || pass.length<6){ setAuthMsg("Wachtwoord moet minstens 6 tekens zijn.", true); return; }
+  if(!pass || pass.length < 6){ setAuthMsg("Wachtwoord moet minstens 6 tekens zijn.", true); return; }
 
   setAuthBusy(true);
   setAuthMsg("Inloggen…");
+
   try{
     profile.username = username;
     saveProfile();
-    const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if(error) throw error;
 
     authUser = (data && (data.user || data.session?.user)) || null;
-    // fetch/create profile in background so the UI isn't blocked by network issues
-    (async ()=>{
-      try{
-        const row = await ensureProfileRow({username});
-        if(row) applyRemoteProfile(row);
-      }catch(err){ console.warn('ensureProfileRow failed:', err?.message||err); }
-      try{ renderSettings(); }catch(e){}
-    })();
 
+    // 1) Probeer profiel rij te halen/aanmaken
+    try{
+      const row = await ensureProfileRow({ username });
+      if(row) applyRemoteProfile(row);
+    }catch(err){
+      console.warn("ensureProfileRow failed:", err?.message || err);
+      // we gaan toch verder (auth is gelukt), maar mogelijk offline / RLS / table issue
+    }
+
+    // 2) UI updaten
     renderSettings();
+    updateUserPill();
+
+    // 3) Cruciaal: als naam/klas ontbreekt => niet naar map, maar naar identity-fix
+    if(!hasIdentity()){
+      setAuthMsg(""); // login ok, dus authMsg leeg
+      openIdentityFix("Welkom terug! Vul even je naam + klas in (nodig voor spelen en scoreboard).");
+      toast("Ingelogd ✅ (profiel nog aanvullen)");
+      return;
+    }
+
+    // 4) Alles ok => naar map
+    setAuthMsg("");
     showScreen("scrMap");
     toast("Welkom terug!");
-    try{ refreshAllLB(); }catch(e){ console.warn('refreshAllLB failed', e); }
+    try{ refreshAllLB(); }catch(e){ console.warn("refreshAllLB failed", e); }
+
   }catch(err){
-    setAuthMsg(String(err?.message||err), true);
+    setAuthMsg(String(err?.message || err), true);
   }finally{
     setAuthBusy(false);
   }
