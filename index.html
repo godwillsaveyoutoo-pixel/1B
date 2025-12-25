@@ -2317,6 +2317,16 @@ async function refreshOverallTop3(){
   renderMap(); // update cups
 }
 
+// Convenience: refresh both overall top3 and the current board listing
+async function refreshAllLB(){
+  try{
+    await loadBoards();
+  }catch(e){ console.warn('loadBoards failed', e); }
+  try{
+    await refreshOverallTop3();
+  }catch(e){ console.warn('refreshOverallTop3 failed', e); }
+}
+
 function renderMap(){
   const host=$("#mapGrid");
   host.innerHTML="";
@@ -2895,12 +2905,15 @@ async function handleLogin(){
     if(error) throw error;
 
     authUser = (data && (data.user || data.session?.user)) || null;
-    try{
-      const row = await ensureProfileRow({username});
-      applyRemoteProfile(row);
-    }catch(err){
-      console.warn('ensureProfileRow failed:', err?.message||err);
-    }
+    // fetch/create profile in background so the UI isn't blocked by network issues
+    (async ()=>{
+      try{
+        const row = await ensureProfileRow({username});
+        if(row) applyRemoteProfile(row);
+      }catch(err){ console.warn('ensureProfileRow failed:', err?.message||err); }
+      try{ renderSettings(); }catch(e){}
+    })();
+
     renderSettings();
     showScreen("scrMap");
     toast("Welkom terug!");
@@ -2937,13 +2950,13 @@ async function handleSignup(){
 
     authUser = (data && (data.user || data.session?.user)) || null;
 
-    // Maak/registreer profiel + init voortgang (best effort)
-    try{
-      await ensureProfileRow({username, name: profile.name, class: profile.class});
-      await upsertProfileRemote();
-    }catch(err){
-      console.warn('profile init failed:', err?.message||err);
-    }
+    // initialize profile remotely in background (don't block UI)
+    (async ()=>{
+      try{
+        await ensureProfileRow({username, name: profile.name, class: profile.class});
+        await upsertProfileRemote();
+      }catch(err){ console.warn('profile init failed:', err?.message||err); }
+    })();
 
     renderSettings();
     showScreen("scrMap");
