@@ -3078,17 +3078,21 @@ async function initAuth(){
     const sess = data?.session;
     if(sess?.user){
       authUser = sess.user;
-      // laad profiel/voortgang
-      const row = await ensureProfileRow({username: profile.username});
-      applyRemoteProfile(row);
-
-      $("#settingsUser").textContent = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
-      $("#autoOkState").textContent = profile.settings.autoOk ? "on" : "off";
-      $("#soundState").textContent = profile.settings.sound ? "on" : "off";
-
-      renderSettings();
-      showScreen("scrMap");
-      refreshAllLB();
+      // laad profiel/voortgang in background (don't block init)
+      (async ()=>{
+        try{
+          const row = await ensureProfileRow({username: profile.username});
+          if(row) applyRemoteProfile(row);
+        }catch(e){ console.warn('initAuth ensureProfileRow failed', e); }
+        try{
+          $("#settingsUser").textContent = hasIdentity() ? `${profile.name} • ${profile.class}` : "Niet ingelogd";
+          $("#autoOkState").textContent = profile.settings.autoOk ? "on" : "off";
+          $("#soundState").textContent = profile.settings.sound ? "on" : "off";
+        }catch(e){}
+        try{ renderSettings(); }catch(e){}
+        try{ showScreen("scrMap"); }catch(e){}
+        try{ refreshAllLB(); }catch(e){}
+      })();
       return;
     }
   }catch(err){
@@ -3103,15 +3107,16 @@ async function initAuth(){
 sb.auth.onAuthStateChange(async (event, session)=>{
   if(session?.user){
     authUser = session.user;
-    try{
-      const row = await ensureProfileRow({username: profile.username});
-      applyRemoteProfile(row);
-      renderSettings();
-      showScreen("scrMap");
-      refreshAllLB();
-    }catch(err){
-      console.warn("auth change:", err?.message||err);
-    }
+    // don't block UI: fetch/create profile in background
+    (async ()=>{
+      try{
+        const row = await ensureProfileRow({username: profile.username});
+        if(row) applyRemoteProfile(row);
+      }catch(err){ console.warn("auth change:", err?.message||err); }
+      try{ renderSettings(); }catch(e){}
+      try{ showScreen("scrMap"); }catch(e){}
+      try{ refreshAllLB(); }catch(e){}
+    })();
   }else{
     authUser = null;
     updateUserPill();
