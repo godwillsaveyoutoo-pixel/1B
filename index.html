@@ -240,8 +240,21 @@
     font-weight: 900;
     display:inline-flex; align-items:center; gap:6px;
   }
-  .medal{ }
-  .cup{ }
+.medal::before{
+  content: "🥉";
+  font-size: 20px;
+  margin-right: 6px;
+}
+
+.medal.silver::before{ content:"🥈"; }
+.medal.gold::before{ content:"🥇"; }
+
+.cup::before{
+  content:"🏆";
+  font-size: 22px;
+  margin-right: 6px;
+}
+
   .tiny{color:var(--mut); font-weight:800; font-size: 14px; line-height:1.35}
 
   /* Topic modal */
@@ -3139,6 +3152,65 @@ sb.auth.onAuthStateChange(async (event, session)=>{
 
   // Board dropdown
   populateBoardTopicSel();
+
+  // Topic modal buttons
+  $("#btnCloseTopic").onclick = closeTopicModal;
+  $("#btnTopicPractice").onclick = ()=>{ closeTopicModal(); if(modalTopic) startPractice(modalTopic.id); };
+  $("#btnTopicRun").onclick = ()=>{ closeTopicModal(); if(modalTopic) startRun(modalTopic.id); };
+  $("#btnTopicTest").onclick = ()=>{ closeTopicModal(); if(modalTopic) startTestSetup(modalTopic.id); };
+
+  // Game controls: OK buttons and Stop
+  $("#btnOkInline").onclick = ()=>{ submitAnswer(); };
+  $("#btnOkMc").onclick = ()=>{ submitAnswer(); };
+
+  $("#btnStop").onclick = ()=>{
+    if(!state.mode){ setScreen(hasIdentity()?"scrMap":"scrStart"); return; }
+    if(state.mode==="practice"){
+      // simply return to map and reset session
+      stopTimer(); resetSession(); setScreen("scrMap");
+      return;
+    }
+    if(state.mode==="run"){
+      // end run immediately
+      finishRun();
+      return;
+    }
+    if(state.mode==="test"){
+      finishTest();
+      return;
+    }
+  };
+
+  // Result screen buttons
+  $("#btnResBack").onclick = ()=>{ setScreen("scrMap"); };
+  $("#btnResAgain").onclick = ()=>{
+    const t = state.topic || "inhoud";
+    if(state.mode==="run") startRun(t);
+    else if(state.mode==="practice") startPractice(t);
+    else startTestSetup(t);
+  };
+
+  // Keypad handling
+  $$("#keypad .key").forEach(k=>{
+    k.onclick = ()=>{
+      if(state.locked) return;
+      const dk = k.dataset.k;
+      const mi = $("#mainInput");
+      if(!mi || mi.parentElement.style.display==='none'){
+        if(dk==='ok') submitAnswer();
+        return;
+      }
+      if(dk==='ok'){ submitAnswer(); return; }
+      if(dk==='back'){ mi.value = mi.value.slice(0,-1); mi.dispatchEvent(new Event('input')); return; }
+      if(dk==='clear'){ mi.value=''; mi.dispatchEvent(new Event('input')); return; }
+      if(dk==='comma') { mi.value += ','; mi.dispatchEvent(new Event('input')); return; }
+      if(dk==='slash') { mi.value += '/'; mi.dispatchEvent(new Event('input')); return; }
+      if(dk==='colon') { mi.value += ':'; mi.dispatchEvent(new Event('input')); return; }
+      if(dk==='minus') { mi.value += '-'; mi.dispatchEvent(new Event('input')); return; }
+      // numeric key
+      if(!dk){ mi.value += k.textContent.trim(); mi.dispatchEvent(new Event('input')); }
+    };
+  });
 
   // Start auth flow
   initAuth();
