@@ -1169,23 +1169,6 @@ function iconGlobe(){
 }
 
 /* ---------- Skill storage (per learner, per topic) ---------- */
-  function toast(msg){
-  // simpele fallback: zet in authMsg of status
-  console.log("TOAST:", msg);
-  setAuthMsg(msg || "");
-}
-
-async function refreshAllLB(){
-  // jouw app heeft al deze twee:
-  // - loadBoards() voor scrBoard
-  // - refreshOverallTop3() voor cups op de map
-  try { await refreshOverallTop3(); } catch(e){}
-  // optioneel: als je op board zit, meteen laden
-  if(state.screen === "scrBoard"){
-    try { await loadBoards(); } catch(e){}
-  }
-}
-
 function learnerKey(){
   if(authUser && authUser.id) return authUser.id;
   const n=(profile.name||"").trim().toLowerCase();
@@ -2259,18 +2242,12 @@ const state={
 };
 
 function setScreen(id){
-  const el = document.getElementById(id);
-  if(!el){
-    console.warn("Unknown screen:", id);
-    return;
-  }
   state.screen=id;
   $$(".screen").forEach(s=>s.classList.remove("active"));
-  el.classList.add("active");
+  $("#"+id).classList.add("active");
   closeDrawer();
   $("#pillMode").style.display = (id==="scrGame") ? "inline-flex" : "none";
 }
-
 // Backwards-compatible alias used in older code
 function showScreen(id){ setScreen(id); }
 function setModePill(text){
@@ -2892,18 +2869,7 @@ function setAuthTab(which){
 $("#tabLogin").onclick=()=>{ setAuthTab("login"); setAuthMsg(""); };
 $("#tabSignup").onclick=()=>{ setAuthTab("signup"); setAuthMsg(""); };
 
-$("#btnStartLeader").onclick = async ()=>{
-  try{
-    populateBoardTopicSel();
-    await loadBoards();
-    showScreen("scrBoard");
-  }catch(e){
-    console.warn(e);
-    setAuthMsg("Kon ranglijst niet laden (offline?).", true);
-    showScreen("scrBoard"); // toon alsnog
-  }
-};
-
+$("#btnStartLeader").onclick=()=>{ showScreen("scrBoard"); refreshAllLB(); };
 $("#btnStartSettings").onclick=()=>{ renderSettings(); showScreen("scrSettings"); };
 
 function setAuthBusy(busy){
@@ -2912,11 +2878,11 @@ function setAuthBusy(busy){
     if(el) el.disabled=!!busy;
   });
 }
+
 async function handleLogin(){
   const user=$("#loginUser").value;
   const pass=$("#loginPass").value;
   const {username, email} = usernameToEmail(user);
-
   if(!username){ setAuthMsg("Kies een geldige gebruikersnaam (letters/cijfers).", true); return; }
   if(!pass || pass.length<6){ setAuthMsg("Wachtwoord moet minstens 6 tekens zijn.", true); return; }
 
@@ -2925,19 +2891,26 @@ async function handleLogin(){
   try{
     profile.username = username;
     saveProfile();
-
-    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
     if(error) throw error;
 
-    // NIET meer: ensureProfileRow/applyRemoteProfile/showScreen hier
-    // Dat doet onAuthStateChange voor ons.
+    authUser = (data && (data.user || data.session?.user)) || null;
+    try{
+      const row = await ensureProfileRow({username});
+      applyRemoteProfile(row);
+    }catch(err){
+      console.warn('ensureProfileRow failed:', err?.message||err);
+    }
+    renderSettings();
+    showScreen("scrMap");
+    toast("Welkom terug!");
+    try{ refreshAllLB(); }catch(e){ console.warn('refreshAllLB failed', e); }
   }catch(err){
     setAuthMsg(String(err?.message||err), true);
   }finally{
     setAuthBusy(false);
   }
 }
-
 
 async function handleSignup(){
   const user=$("#signupUser").value;
@@ -2962,16 +2935,20 @@ async function handleSignup(){
     const {data, error} = await sb.auth.signUp({email, password: pass});
     if(error) throw error;
 
-    authUser = data.user;
+    authUser = (data && (data.user || data.session?.user)) || null;
 
-    // Maak/registreer profiel + init voortgang
-    await ensureProfileRow({username, name: profile.name, class: profile.class});
-    await upsertProfileRemote();
+    // Maak/registreer profiel + init voortgang (best effort)
+    try{
+      await ensureProfileRow({username, name: profile.name, class: profile.class});
+      await upsertProfileRemote();
+    }catch(err){
+      console.warn('profile init failed:', err?.message||err);
+    }
 
     renderSettings();
     showScreen("scrMap");
     toast("Account klaar!");
-    refreshAllLB();
+    try{ refreshAllLB(); }catch(e){ console.warn('refreshAllLB failed', e); }
   }catch(err){
     setAuthMsg(String(err?.message||err), true);
   }finally{
@@ -3041,33 +3018,24 @@ async function initAuth(){
 }
 
 sb.auth.onAuthStateChange(async (event, session)=>{
-  try{
-    if(session?.user){
-      authUser = session.user;
-
-      setAuthMsg("Profiel laden…");
+  if(session?.user){
+    authUser = session.user;
+    try{
       const row = await ensureProfileRow({username: profile.username});
       applyRemoteProfile(row);
-
       renderSettings();
       showScreen("scrMap");
-
-      setAuthMsg("");
-      await refreshAllLB();
-    }else{
-      authUser = null;
-      updateUserPill();
-      renderSettings();
-      showScreen("scrStart");
+      refreshAllLB();
+    }catch(err){
+      console.warn("auth change:", err?.message||err);
     }
-  }catch(err){
-    console.error("auth change error:", err);
-    setAuthMsg("Inloggen gelukt, maar profiel laden faalde: " + (err?.message||err), true);
-    // Dit is belangrijk: je ziet dan meteen wat er misloopt
+  }else{
+    authUser = null;
+    updateUserPill();
+    renderSettings();
     showScreen("scrStart");
   }
 });
-
 
 
 (function boot(){
