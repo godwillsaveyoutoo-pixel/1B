@@ -1169,6 +1169,23 @@ function iconGlobe(){
 }
 
 /* ---------- Skill storage (per learner, per topic) ---------- */
+  function toast(msg){
+  // simpele fallback: zet in authMsg of status
+  console.log("TOAST:", msg);
+  setAuthMsg(msg || "");
+}
+
+async function refreshAllLB(){
+  // jouw app heeft al deze twee:
+  // - loadBoards() voor scrBoard
+  // - refreshOverallTop3() voor cups op de map
+  try { await refreshOverallTop3(); } catch(e){}
+  // optioneel: als je op board zit, meteen laden
+  if(state.screen === "scrBoard"){
+    try { await loadBoards(); } catch(e){}
+  }
+}
+
 function learnerKey(){
   if(authUser && authUser.id) return authUser.id;
   const n=(profile.name||"").trim().toLowerCase();
